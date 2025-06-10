@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.1.1",
+    version: "6.1.2",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -155,10 +155,86 @@ WidgetMetadata = {
         },
         {
             id: "hotVideos",
-            title: "热门视频",
-            functionName: "getHotVideos",
+            title: "热播视频",
+            functionName: "getVideos",
             cacheDuration: 120,
             params: [
+                {
+                    name: "pageType",
+                    value: "ht",
+                    type: "constant"
+                },
+                {
+                    name: "country",
+                    title: "国家/地区",
+                    type: "enumeration",
+                    description: "选择国家或地区",
+                    value: "world",
+                    enumOptions: [
+                        { title: "全球", value: "world" },
+                        { title: "日本", value: "jp" },
+                        { title: "韩国", value: "kr" },
+                        { title: "美国", value: "us" },
+                        { title: "英国", value: "gb" },
+                        { title: "法国", value: "fr" },
+                        { title: "德国", value: "de" },
+                        { title: "澳大利亚", value: "au" },
+                        { title: "俄罗斯", value: "ru" },
+                        { title: "塞尔维亚", value: "rs" },
+                        { title: "丹麦", value: "dk" },
+                        { title: "阿根廷", value: "ar" },
+                        { title: "奥地利", value: "at" },
+                        { title: "比利时", value: "be" },
+                        { title: "巴西", value: "br" },
+                        { title: "保加利亚", value: "bg" },
+                        { title: "加拿大", value: "ca" },
+                        { title: "智利", value: "cl" },
+                        { title: "克罗地亚", value: "hr" },
+                        { title: "捷克", value: "cz" },
+                        { title: "埃及", value: "eg" },
+                        { title: "芬兰", value: "fi" },
+                        { title: "希腊", value: "gr" },
+                        { title: "匈牙利", value: "hu" },
+                        { title: "印度", value: "in" },
+                        { title: "爱尔兰", value: "ie" },
+                        { title: "以色列", value: "il" },
+                        { title: "意大利", value: "it" },
+                        { title: "墨西哥", value: "mx" },
+                        { title: "摩洛哥", value: "ma" },
+                        { title: "荷兰", value: "nl" },
+                        { title: "新西兰", value: "nz" },
+                        { title: "挪威", value: "no" },
+                        { title: "巴基斯坦", value: "pk" },
+                        { title: "波兰", value: "pl" },
+                        { title: "葡萄牙", value: "pt" },
+                        { title: "罗马尼亚", value: "ro" },
+                        { title: "斯洛伐克", value: "sk" },
+                        { title: "西班牙", value: "es" },
+                        { title: "瑞典", value: "se" },
+                        { title: "瑞士", value: "ch" },
+                        { title: "乌克兰", value: "ua" }
+                    ]
+                },
+                {
+                    name: "page",
+                    title: "页码",
+                    type: "page",
+                    description: "热门视频页码",
+                    value: "1"
+                }
+            ]
+        },
+        {
+            id: "topViews",
+            title: "最多观看",
+            functionName: "getVideos",
+            cacheDuration: 120,
+            params: [
+                {
+                    name: "pageType",
+                    value: "mv",
+                    type: "constant"
+                },
                 {
                     name: "country",
                     title: "国家/地区",
@@ -759,15 +835,16 @@ function getUserUploads(params) {
 }
 
 // 获取热门视频列表
-async function getHotVideos(params = {}) {
-    const cc = params.country || "world";  // 如果没有传递country参数，默认使用 "world"
+async function getVideos(params = {}) {
+    const cc = params.country;
     const page = params.page || 1;  // 默认第一页
 
-    // 打印检查传入的参数，确保country传递正确
+    const pageType = params.pageType // 新增参数: "ht" 表示热门，"mv" 表示最多观看
+
     console.log("传递的参数:", params);
 
-    // 构建请求 URL，cc=world表示全世界，其他则按国家代码来
-    const url = `https://cn.pornhub.com/video?o=ht&cc=${cc}&page=${page}`;
+    // 构建请求 URL，根据 pageType 参数决定排序方式
+    const url = `https://cn.pornhub.com/video?o=${pageType}&cc=${cc}&page=${page}`;
 
     // 打印构建的 URL
     console.log(`请求热门视频 URL: ${url}`);
