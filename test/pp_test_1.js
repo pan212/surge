@@ -1,18 +1,18 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.3",
+    version: "6.0.2",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
     site: "https://github.com/Madai-v/ForwardWidgets",
-    detailCacheDuration: 60,
+    detailCacheDuration: 120,
     modules: [
         {
             id: "favorites",
             title: "我的最爱",
             functionName: "getFavorites",
-            cacheDuration: 60,
+            cacheDuration: 120,
             params: [
                 {
                     name: "username",
@@ -61,7 +61,7 @@ WidgetMetadata = {
             id: "searchUser",
             title: "优选艺人",
             functionName: "getUserUploads",
-            cacheDuration: 60,
+            cacheDuration: 120,
             params: [
                 {
                     name: "username",
@@ -830,20 +830,13 @@ function getUserUploads(params) {
                 if (!pageTitle.includes(params.username)) {
                     console.log("警告：页面标题 \"" + pageTitle + "\" 可能不包含艺人名称 \"" + params.username + "\"");
                 }
-
-                // 提取视频列表
                 var videos = [];
-                var processedViewkeys = {}; // 用于去重
-
-                // 尝试找到视频项 - 排除#headerMenuContainer下的非目标用户视频
+                var processedViewkeys = {}; 
                 var allVideoItems = $(".videoblock, .videoBox, .pcVideoListItem");
                 var videoItems = allVideoItems.filter(function () {
                     return !$(this).closest('#headerMenuContainer').length;
                 });
-
                 console.log("找到 " + videoItems.length + " 个视频项（排除headerMenuContainer后）");
-
-                // 如果找不到，尝试其他可能的选择器
                 if (!videoItems.length) {
                     allVideoItems = $("[data-video-vkey], [data-id], a[href*='viewkey=']").closest("li, div.videoblock, div.videoBox");
                     videoItems = allVideoItems.filter(function () {
@@ -851,35 +844,22 @@ function getUserUploads(params) {
                     });
                     console.log("使用备选选择器找到 " + videoItems.length + " 个视频项");
                 }
-
-                // 如果找不到任何视频项
                 if (!videoItems.length) {
                     console.log("未找到任何视频项。可能是页面结构已变化或该艺人未上传视频。");
-                    resolve([]); // 返回空数组表示没有视频
+                    resolve([]);
                     return;
                 }
-
-                // 处理每个视频项
                 videoItems.each(function (index, element) {
                     try {
-                        // 提取viewkey
                         var viewkey = extractViewkey($, element);
                         if (!viewkey) {
-                            return; // 跳过无效项
+                            return;
                         }
-
-                        // 检查是否已处理过该viewkey，避免重复添加
                         if (processedViewkeys[viewkey]) {
                             return;
                         }
-
-                        // 提取视频信息
                         var videoInfo = extractVideoInfo($, element, viewkey);
-
-                        // 添加到结果数组
                         videos.push(videoInfo);
-
-                        // 添加到已处理集合
                         processedViewkeys[viewkey] = true;
 
                     } catch (error) {
@@ -901,7 +881,7 @@ function getUserUploads(params) {
     });
 }
 
-// 加载视频详情函数，支持推荐视频
+// 加载视频详情函数
 async function loadDetail(link) {
     try {
         console.log(`开始加载视频详情: ${link}`);
@@ -933,8 +913,9 @@ async function loadDetail(link) {
 
         // 4. 推荐视频区块，复用工具函数
         const recommendedVideos = [];
-        const recommendedItems = $(".videos.underplayer-thumbs.fixedSizeThumbsVideosListing .video-box, .videos.underplayer-thumbs.fixedSizeThumbsVideosListing li, .underplayer-thumbs .videoBox");
-        recommendedItems.each(function(i, element) {
+        const recommendedItems = $(".videos.underplayer-thumbs.fixedSizeThumbsVideosListing li[data-video-vkey]");
+
+        recommendedItems.each(function (i, element) {
             const vkey = extractViewkey($, element);
             if (!vkey) return;
             const videoInfo = extractVideoInfo($, element, vkey);
@@ -974,8 +955,6 @@ async function loadDetail(link) {
     }
 }
 
-
-// 导出模块
 module.exports = {
     metadata: WidgetMetadata,
     getFavorites: getFavorites,
