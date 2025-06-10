@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.1.2",
+    version: "6.1.8",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -161,6 +161,8 @@ WidgetMetadata = {
             params: [
                 {
                     name: "pageType",
+                    title: "区分页面类型",
+                    description: "区分页面类型",
                     value: "ht",
                     type: "constant"
                 },
@@ -232,6 +234,8 @@ WidgetMetadata = {
             params: [
                 {
                     name: "pageType",
+                    title: "区分页面类型",
+                    description: "区分页面类型",
                     value: "mv",
                     type: "constant"
                 },
