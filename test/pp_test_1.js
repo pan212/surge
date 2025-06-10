@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.2",
+    version: "6.0.3",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -911,25 +911,30 @@ async function loadDetail(link) {
             throw new Error("无法获取视频播放链接");
         }
 
-        // 4. 推荐视频区块，复用工具函数
+        // 4. 推荐视频区块采集，限制最多10条，去掉循环体log
         const recommendedVideos = [];
         const recommendedItems = $(".videos.underplayer-thumbs.fixedSizeThumbsVideosListing li[data-video-vkey]");
-
-        recommendedItems.each(function (i, element) {
+        recommendedItems.slice(0, 10).each(function (i, element) {
+            const $element = $(element);
             const vkey = extractViewkey($, element);
             if (!vkey) return;
-            const videoInfo = extractVideoInfo($, element, vkey);
+            // 极简字段采集
+            const title = $element.find('.title').text().trim() || $element.find('a[title]').attr('title') || '';
+            const img = $element.find('img');
+            const coverUrl = img.attr('src') || img.attr('data-thumb') || img.attr('data-src') || '';
+            const previewUrl = img.attr('data-mediabook') || img.attr('data-preview') || img.attr('data-webm') || '';
+            const durationText = $element.find('.duration, .videoDuration').text().trim();
             recommendedVideos.push({
-                id: videoInfo.id,
-                type: videoInfo.type,
-                title: videoInfo.title,
-                coverUrl: videoInfo.coverUrl,
-                previewUrl: videoInfo.previewUrl,
-                duration: videoInfo.duration,
-                durationText: videoInfo.durationText,
-                link: `https://cn.pornhub.com${videoInfo.link}`
+                id: vkey,
+                type: "link",
+                title: title,
+                coverUrl: coverUrl,
+                previewUrl: previewUrl,
+                durationText: durationText,
+                link: `https://cn.pornhub.com/view_video.php?viewkey=${vkey}`
             });
         });
+        console.log("推荐区块采集数量:", recommendedVideos.length);
 
         // 5. 返回 ForwardWidget 规范详情对象
         const result = {
@@ -954,6 +959,7 @@ async function loadDetail(link) {
         throw error;
     }
 }
+
 
 module.exports = {
     metadata: WidgetMetadata,
