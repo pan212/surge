@@ -165,7 +165,7 @@ WidgetMetadata = {
                     title: "国家/地区",
                     type: "enumeration",
                     enumOptions: [
-                        { title: "全部", value: "word" },
+                        { title: "全部", value: "world" },
                         { title: "美国", value: "us" },
                         { title: "日本", value: "jp" },
                         { title: "韩国", value: "kr" },
