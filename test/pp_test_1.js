@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.0",
+    version: "6.0.6",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -592,7 +592,13 @@ async function getHotVideos(params = {}) {
         });
 
         const htmlContent = response.data;
+        console.log("HTML 内容:", htmlContent);  // 打印原始HTML
+
+        // 确保cheerio或Widget.html.load可用
         const $ = Widget.html.load(htmlContent);
+        if (!$) {
+            throw new Error("无法加载HTML内容，请检查Widget.cheerio是否正确配置");
+        }
 
         // 解析视频项
         const items = [];
@@ -628,6 +634,8 @@ async function getHotVideos(params = {}) {
                 link: link
             });
         });
+
+        console.log("提取的视频项:", items);  // 打印提取到的视频数据
 
         // 返回视频列表（数组格式）
         return items;  // 返回items数组，符合ForwardWidget期望格式
