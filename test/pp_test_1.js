@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.2",
+    version: "6.0.1",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -901,67 +901,75 @@ function getUserUploads(params) {
     });
 }
 
-// 加载视频详情函数
+// 加载视频详情函数，支持推荐视频
 async function loadDetail(link) {
     try {
         console.log(`开始加载视频详情: ${link}`);
 
-        // 从 link 中提取 viewkey
+        // 1. 提取 viewkey
         const viewkeyMatch = link.match(/viewkey=([^&]+)/);
         if (!viewkeyMatch || !viewkeyMatch[1]) {
             console.log(`错误: 无效的视频链接 ${link}`);
             throw new Error("无效的视频链接");
         }
-
         const viewkey = viewkeyMatch[1];
 
-        // 构建完整的视频 URL
+        // 2. 构建详情页链接并获取HTML
         const fullVideoUrl = `https://cn.pornhub.com/view_video.php?viewkey=${viewkey}`;
-
-        // 获取当前视频详情页的 HTML
         const response = await Widget.http.get(fullVideoUrl, {
             headers: {
-                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-            },
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            }
         });
-
         const htmlContent = response.data;
         const $ = Widget.html.load(htmlContent);
 
-        // 获取 m3u8 播放链接，不做缓存处理，由播放器系统管理
+        // 3. 获取主视频m3u8播放链接
         const m3u8Data = await getVideoM3u8Link(viewkey);
-
         if (!m3u8Data || !m3u8Data.videoUrl) {
             console.log(`错误: 无法获取视频播放链接`);
             throw new Error("无法获取视频播放链接");
         }
 
-        // 获取视频的推荐区块
+        // 4. 推荐视频区块解析
         const recommendedVideos = [];
-        const recommendedItems = $(".videos.underplayer-thumbs.fixedSizeThumbsVideosListing .video-box"); // 推荐视频区域的选择器
+        // 推荐区块里的每个推荐视频item
+        $('.videos.underplayer-thumbs.fixedSizeThumbsVideosListing .video-box, .videos.underplayer-thumbs.fixedSizeThumbsVideosListing li, .underplayer-thumbs .videoBox').each((i, element) => {
+            let $item = $(element);
 
-        recommendedItems.each((i, element) => {
-            const $item = $(element);
-            const viewkey = $item.data("video-vkey"); // 获取推荐视频的 viewkey
-            const title = $item.find(".title").text(); // 获取推荐视频的标题
-            const thumbnail = $item.find("img").attr("src"); // 获取推荐视频的封面图
-
-            // 构建推荐视频对象
-            if (viewkey) {
-                recommendedVideos.push({
-                    id: viewkey,
-                    type: "link",
-                    title: title,
-                    coverUrl: thumbnail,
-                    link: "/view_video.php?viewkey=" + viewkey
-                });
+            // 兼容各种结构
+            let vkey = $item.data('video-vkey') || $item.attr('data-video-vkey');
+            if (!vkey) {
+                // 有时写在子元素
+                const datakey = $item.find('[data-video-vkey]').attr('data-video-vkey');
+                if (datakey) vkey = datakey;
             }
+            if (!vkey) return; // 跳过无效项
+
+            // 标题
+            let title = $item.find('.title').text().trim();
+            if (!title) title = $item.find('a[title]').attr('title') || $item.find('a').attr('title') || $item.find('a').text().trim();
+
+            // 封面
+            let coverUrl = $item.find('img').attr('data-thumb') || $item.find('img').attr('data-src') || $item.find('img').attr('src');
+            if (coverUrl && coverUrl.startsWith('//')) coverUrl = 'https:' + coverUrl;
+
+            // 详情页链接
+            let detailLink = `https://cn.pornhub.com/view_video.php?viewkey=${vkey}`;
+
+            recommendedVideos.push({
+                id: vkey,
+                type: "link",
+                title: title || '推荐视频',
+                coverUrl: coverUrl || '',
+                link: detailLink
+            });
         });
 
-        // 返回 Forward 兼容的详情对象，直接将推荐视频加入 childItems 字段
+        // 5. 返回 ForwardWidget 规范详情对象
         const result = {
             id: viewkey,
-            type: "detail", // 必须是 detail 类型
+            type: "detail",
             videoUrl: m3u8Data.videoUrl,
             customHeaders: {
                 "Referer": fullVideoUrl,
@@ -971,10 +979,10 @@ async function loadDetail(link) {
             title: "视频播放",
             duration: 0,
             formats: m3u8Data.formats,
-            childItems: recommendedVideos // 直接将推荐视频作为 childItems 返回
+            childItems: recommendedVideos // 推荐视频列表
         };
 
-        console.log(`视频详情加载成功: ${JSON.stringify({ id: result.id, quality: result.quality, source: m3u8Data.source })}`);
+        console.log(`视频详情加载成功: ${JSON.stringify({ id: result.id, quality: result.quality, recommendCount: recommendedVideos.length })}`);
         return result;
     } catch (error) {
         console.log(`loadDetail 执行失败: ${error.message}`);
