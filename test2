@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.6",
+    version: "6.0.1",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -599,11 +599,11 @@ async function getHotVideos(params = {}) {
         const htmlContent = response.data;
         console.log("返回的HTML内容：", htmlContent);  // 打印返回的HTML内容，检查是否包含视频数据
 
-        // 通过 Widget.html.load 解析 HTML
+        // 使用 Widget.html.load 解析 HTML
         const $ = Widget.html.load(htmlContent);
         if (!$) {
-            console.log("解析HTML失败，无法加载 cheerio");
-            throw new Error("无法加载HTML内容，请检查Widget.cheerio是否正确配置");
+            console.log("解析HTML失败，无法加载 Widget.html.load");
+            throw new Error("无法加载HTML内容，请检查Widget.html.load是否正确配置");
         }
 
         // 解析视频项
@@ -632,9 +632,6 @@ async function getHotVideos(params = {}) {
             // 获取视频时长
             const durationText = $item.find(".duration, .videoDuration").text().trim();
 
-            // 输出每个视频的信息
-            console.log(`视频 ID: ${vkey}, 标题: ${title}, 链接: ${link}`);
-
             // 将视频项推送到items数组
             items.push({
                 id: vkey,
@@ -657,8 +654,6 @@ async function getHotVideos(params = {}) {
         throw new Error("获取热门视频失败: " + error.message);  // 返回异常错误
     }
 }
-
-
 
 // 获取用户上传的视频
 function getUserUploads(params) {
