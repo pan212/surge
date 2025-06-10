@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.4",
+    version: "6.0.5",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -864,21 +864,16 @@ async function loadDetail(link) {
         const htmlContent = response.data;
         const $ = Widget.html.load(htmlContent);
 
-        // 3. 获取主视频m3u8播放链接
-        const m3u8Data = await getVideoM3u8Link(viewkey);
-        if (!m3u8Data || !m3u8Data.videoUrl) {
-            console.log(`错误: 无法获取视频播放链接`);
-            throw new Error("无法获取视频播放链接");
-        }
+        // 3&4. 主视频m3u8拉取和推荐区块采集同时开始
+        const m3u8Promise = getVideoM3u8Link(viewkey);
 
-        // 4. 推荐视频区块采集，限制最多10条，去掉循环体log
+        // 推荐区块采集直接同步进行
         const recommendedVideos = [];
         const recommendedItems = $(".videos.underplayer-thumbs.fixedSizeThumbsVideosListing li[data-video-vkey]");
         recommendedItems.slice(0, 10).each(function (i, element) {
             const $element = $(element);
             const vkey = extractViewkey($, element);
             if (!vkey) return;
-            // 极简字段采集
             const title = $element.find('.title').text().trim() || $element.find('a[title]').attr('title') || '';
             const img = $element.find('img');
             const coverUrl = img.attr('src') || img.attr('data-thumb') || img.attr('data-src') || '';
@@ -895,6 +890,13 @@ async function loadDetail(link) {
             });
         });
         console.log("推荐区块采集数量:", recommendedVideos.length);
+
+        // 等待主视频m3u8拉取完成
+        const m3u8Data = await m3u8Promise;
+        if (!m3u8Data || !m3u8Data.videoUrl) {
+            console.log(`错误: 无法获取视频播放链接`);
+            throw new Error("无法获取视频播放链接");
+        }
 
         // 5. 返回 ForwardWidget 规范详情对象
         const result = {
@@ -919,7 +921,6 @@ async function loadDetail(link) {
         throw error;
     }
 }
-
 
 module.exports = {
     metadata: WidgetMetadata,
