@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.1.4",
+    version: "6.1.5",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -863,7 +863,7 @@ async function getVideos(params = {}) {
     console.log("传递的参数:", params);
 
     // 构建请求 URL，根据 pageType 参数决定排序方式
-    const url = `https://cn.pornhub.com/video?o=${pageType}&cc=${cc}&page=${page}`;
+    let url = `https://cn.pornhub.com/video?o=${pageType}&cc=${cc}&page=${page}`;
 
     // 如果是最多观看功能，并且提供了时间范围，则添加时间范围参数
     if (pageType === "mv" && timeRange) {
