@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.2",
+    version: "6.0.3",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -797,83 +797,6 @@ function getUserUploads(params) {
 }
 
 // 获取热门视频列表
-async function getHotVideos(params) {
-    try {
-        var country = params.country || "world";
-        var page = Math.max(1, Number(params.page) || 1);
-
-        // 构建URL - 基础URL：https://cn.pornhub.com/video?o=ht&cc=国家代码&page=页码
-        var url = "https://cn.pornhub.com/video?o=ht";
-        
-        // 添加国家代码参数
-        if (country && country !== "world") {
-            url += "&cc=" + encodeURIComponent(country);
-        } else {
-            url += "&cc=world";
-        }
-        
-        // 添加页码参数
-        if (page > 1) {
-            url += "&page=" + page;
-        }
-
-        console.log("请求热门视频URL: " + url);
-
-        // 统一请求头
-        var headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "Cache-Control": "no-cache",
-            "Pragma": "no-cache",
-            "Referer": "https://cn.pornhub.com/",
-            "Host": "cn.pornhub.com"
-        };
-
-        var response = await Widget.http.get(url, { headers: headers });
-
-        if (!response || !response.data) {
-            throw new Error("无法获取热门视频页面");
-        }
-
-        var $ = Widget.cheerio.load(response.data);
-        var videos = [];
-
-        // 查找视频元素 - 使用多种可能的选择器
-        var videoElements = $(".videoblock, .phimage, .pcVideoListItem, .videoBox, .wrap, .video-item, .video-wrapper, .thumbnail-info-wrapper");
-
-        console.log("找到视频元素数量: " + videoElements.length);
-
-        videoElements.each(function (index, element) {
-            try {
-                var viewkey = extractViewkey($, element);
-                if (viewkey) {
-                    var videoInfo = extractVideoInfo($, element, viewkey);
-                    videos.push(videoInfo);
-                }
-            } catch (error) {
-                console.log("处理视频元素失败: " + error.message);
-            }
-        });
-
-        // 检测分页信息
-        var paginationInfo = detectPagination(response.data, page);
-
-        console.log("热门视频获取完成，共 " + videos.length + " 个视频");
-
-        return {
-            videos: videos,
-            pagination: {
-                currentPage: paginationInfo.currentPage,
-                maxPage: paginationInfo.maxPage,
-                hasNext: paginationInfo.currentPage < paginationInfo.maxPage,
-                hasPrev: paginationInfo.currentPage > 1
-            }
-        };
-
-    } catch (error) {
-        console.log("getHotVideos error: " + error.message);
-        throw error;
-    }
 async function getHotVideos(params = {}) {
     const cc = params.cc || "world";  // 默认全世界
     const page = params.page || 1;  // 默认第一页
@@ -953,7 +876,6 @@ async function getHotVideos(params = {}) {
         throw new Error("获取热门视频失败: " + error.message);  // 返回异常错误
     }
 }
-
 
 // 加载视频详情函数
 async function loadDetail(link) {
