@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.1",
+    version: "6.0.3",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -931,38 +931,22 @@ async function loadDetail(link) {
             throw new Error("无法获取视频播放链接");
         }
 
-        // 4. 推荐视频区块解析
+        // 4. 推荐视频区块，复用工具函数
         const recommendedVideos = [];
-        // 推荐区块里的每个推荐视频item
-        $('.videos.underplayer-thumbs.fixedSizeThumbsVideosListing .video-box, .videos.underplayer-thumbs.fixedSizeThumbsVideosListing li, .underplayer-thumbs .videoBox').each((i, element) => {
-            let $item = $(element);
-
-            // 兼容各种结构
-            let vkey = $item.data('video-vkey') || $item.attr('data-video-vkey');
-            if (!vkey) {
-                // 有时写在子元素
-                const datakey = $item.find('[data-video-vkey]').attr('data-video-vkey');
-                if (datakey) vkey = datakey;
-            }
-            if (!vkey) return; // 跳过无效项
-
-            // 标题
-            let title = $item.find('.title').text().trim();
-            if (!title) title = $item.find('a[title]').attr('title') || $item.find('a').attr('title') || $item.find('a').text().trim();
-
-            // 封面
-            let coverUrl = $item.find('img').attr('data-thumb') || $item.find('img').attr('data-src') || $item.find('img').attr('src');
-            if (coverUrl && coverUrl.startsWith('//')) coverUrl = 'https:' + coverUrl;
-
-            // 详情页链接
-            let detailLink = `https://cn.pornhub.com/view_video.php?viewkey=${vkey}`;
-
+        const recommendedItems = $(".videos.underplayer-thumbs.fixedSizeThumbsVideosListing .video-box, .videos.underplayer-thumbs.fixedSizeThumbsVideosListing li, .underplayer-thumbs .videoBox");
+        recommendedItems.each(function(i, element) {
+            const vkey = extractViewkey($, element);
+            if (!vkey) return;
+            const videoInfo = extractVideoInfo($, element, vkey);
             recommendedVideos.push({
-                id: vkey,
-                type: "link",
-                title: title || '推荐视频',
-                coverUrl: coverUrl || '',
-                link: detailLink
+                id: videoInfo.id,
+                type: videoInfo.type,
+                title: videoInfo.title,
+                coverUrl: videoInfo.coverUrl,
+                previewUrl: videoInfo.previewUrl,
+                duration: videoInfo.duration,
+                durationText: videoInfo.durationText,
+                link: `https://cn.pornhub.com${videoInfo.link}`
             });
         });
 
@@ -979,7 +963,7 @@ async function loadDetail(link) {
             title: "视频播放",
             duration: 0,
             formats: m3u8Data.formats,
-            childItems: recommendedVideos // 推荐视频列表
+            childItems: recommendedVideos
         };
 
         console.log(`视频详情加载成功: ${JSON.stringify({ id: result.id, quality: result.quality, recommendCount: recommendedVideos.length })}`);
