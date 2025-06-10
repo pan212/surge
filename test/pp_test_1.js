@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.3",
+    version: "6.0.5",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
