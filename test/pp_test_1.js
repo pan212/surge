@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.6",
+    version: "6.0.1",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -824,7 +824,7 @@ async function getHotVideos(params = {}) {
         const htmlContent = response.data;
         const $ = Widget.html.load(htmlContent);
 
-        // 解析视频列表
+        // 解析视频项
         const items = [];
         $("ul.videos.search-video-thumbs > li").each(function () {
             const $item = $(this);
@@ -846,7 +846,7 @@ async function getHotVideos(params = {}) {
             // 获取视频时长
             const durationText = $item.find(".duration, .videoDuration").text().trim();
 
-            // 将视频信息推送到items数组
+            // 将视频项推送到items数组
             items.push({
                 id: vkey,
                 type: "link",
@@ -858,15 +858,9 @@ async function getHotVideos(params = {}) {
             });
         });
 
-        // 返回视频列表及分页信息
-        return {
-            id: `hotVideoList-${cc}-${page}`,
-            type: "list",
-            title: `热门视频 - ${cc.toUpperCase()}`,
-            items: items,
-            page: page,
-            hasMore: items.length > 0  // 判断是否还有更多视频
-        };
+        // 返回视频列表（数组格式）
+        return items;  // 只返回items数组，ForwardWidget期望的格式
+
     } catch (error) {
         console.error("获取热门视频失败: ", error.message);  // 错误信息打印
         throw new Error("获取热门视频失败: " + error.message);  // 返回异常错误
