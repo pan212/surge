@@ -153,7 +153,6 @@ WidgetMetadata = {
                 }
             ]
         },
-,
         {
             id: "hotVideos",
             title: "热门视频",
