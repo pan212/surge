@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.5",
+    version: "6.0.6",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -428,27 +428,6 @@ function extractM3u8FromHtml(html) {
             }
         }
 
-        // 方法3: 直接搜索m3u8链接
-        var m3u8UrlMatch = html.match(/https:\/\/[^"']+\.m3u8[^"']*/);
-        if (m3u8UrlMatch) {
-            var m3u8Url = m3u8UrlMatch[0];
-
-            // 尝试从URL中提取质量
-            var qualityMatch = m3u8Url.match(/(\d+)[pP]_\d+[kK]/);
-            var quality = qualityMatch ? qualityMatch[1] + "p" : '720p'; // 默认假设720p
-
-            return {
-                videoUrl: m3u8Url,
-                quality: quality,
-                formats: [{
-                    url: m3u8Url,
-                    format: quality,
-                    ext: 'm3u8',
-                    type: 'hls'
-                }]
-            };
-        }
-
         return null;
     } catch (error) {
         console.log("从HTML提取m3u8链接失败: " + error.message);
@@ -864,16 +843,21 @@ async function loadDetail(link) {
         const htmlContent = response.data;
         const $ = Widget.html.load(htmlContent);
 
-        // 3&4. 主视频m3u8拉取和推荐区块采集同时开始
-        const m3u8Promise = getVideoM3u8Link(viewkey);
+        // 3. 获取主视频m3u8播放链接
+        const m3u8Data = await getVideoM3u8Link(viewkey);
+        if (!m3u8Data || !m3u8Data.videoUrl) {
+            console.log(`错误: 无法获取视频播放链接`);
+            throw new Error("无法获取视频播放链接");
+        }
 
-        // 推荐区块采集直接同步进行
+        // 4. 推荐视频区块采集，限制最多10条
         const recommendedVideos = [];
         const recommendedItems = $(".videos.underplayer-thumbs.fixedSizeThumbsVideosListing li[data-video-vkey]");
         recommendedItems.slice(0, 10).each(function (i, element) {
             const $element = $(element);
             const vkey = extractViewkey($, element);
             if (!vkey) return;
+            // 极简字段采集
             const title = $element.find('.title').text().trim() || $element.find('a[title]').attr('title') || '';
             const img = $element.find('img');
             const coverUrl = img.attr('src') || img.attr('data-thumb') || img.attr('data-src') || '';
@@ -890,13 +874,6 @@ async function loadDetail(link) {
             });
         });
         console.log("推荐区块采集数量:", recommendedVideos.length);
-
-        // 等待主视频m3u8拉取完成
-        const m3u8Data = await m3u8Promise;
-        if (!m3u8Data || !m3u8Data.videoUrl) {
-            console.log(`错误: 无法获取视频播放链接`);
-            throw new Error("无法获取视频播放链接");
-        }
 
         // 5. 返回 ForwardWidget 规范详情对象
         const result = {
@@ -921,6 +898,7 @@ async function loadDetail(link) {
         throw error;
     }
 }
+
 
 module.exports = {
     metadata: WidgetMetadata,
