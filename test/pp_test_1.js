@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.3",
+    version: "6.0.4",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -328,7 +328,7 @@ function extractVideoInfo($, element, viewkey) {
         uploadDate: stats.uploadDate
     };
 
-    //console.log("视频信息: " + JSON.stringify(videoData));
+    console.log("视频信息: " + JSON.stringify(videoData));
 
     return videoData;
 }
@@ -456,79 +456,39 @@ function extractM3u8FromHtml(html) {
     }
 }
 
-// 获取视频m3u8播放链接 - 不做缓存，由播放器系统管理
+// 获取视频m3u8播放链接
 async function getVideoM3u8Link(viewkey) {
     try {
-        console.log("开始获取视频 " + viewkey + " 的播放链接");
-
-        // 构建请求头
+        // 统一请求头
         var headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
             "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
             "Cache-Control": "no-cache",
-            "Pragma": "no-cache"
+            "Pragma": "no-cache",
+            "Referer": "https://cn.pornhub.com/",
+            "Host": "cn.pornhub.com"
         };
 
-        // 先尝试中文站点
-        var cnUrl = "https://cn.pornhub.com/view_video.php?viewkey=" + viewkey;
-        console.log("尝试从中文站点获取: " + cnUrl);
+        const cnUrl = "https://cn.pornhub.com/view_video.php?viewkey=" + viewkey;
+        const cnResponse = await Widget.http.get(cnUrl, { headers });
 
-        try {
-            const cnResponse = await Widget.http.get(cnUrl, {
-                headers: {
-                    "User-Agent": headers["User-Agent"],
-                    "Accept-Language": headers["Accept-Language"],
-                    "Cache-Control": headers["Cache-Control"],
-                    "Pragma": headers["Pragma"],
-                    "Referer": "https://cn.pornhub.com/",
-                    "Host": "cn.pornhub.com"
-                }
-            });
-
-            if (cnResponse && cnResponse.data) {
-                var m3u8Data = extractM3u8FromHtml(cnResponse.data);
-                if (m3u8Data) {
-                    m3u8Data.source = 'cn';
-                    console.log("从中文站点获取成功，质量: " + m3u8Data.quality);
-                    return m3u8Data;
-                }
-            }
-        } catch (cnError) {
-            console.log("中文站点请求失败: " + cnError.message);
-        }
-
-        // 如果中文站点失败，尝试国际站点
-        var wwwUrl = "https://www.pornhub.com/view_video.php?viewkey=" + viewkey;
-        console.log("尝试从国际站点获取: " + wwwUrl);
-
-        const wwwResponse = await Widget.http.get(wwwUrl, {
-            headers: {
-                "User-Agent": headers["User-Agent"],
-                "Accept-Language": headers["Accept-Language"],
-                "Cache-Control": headers["Cache-Control"],
-                "Pragma": headers["Pragma"],
-                "Referer": "https://www.pornhub.com/",
-                "Host": "www.pornhub.com"
-            }
-        });
-
-        if (wwwResponse && wwwResponse.data) {
-            var m3u8Data = extractM3u8FromHtml(wwwResponse.data);
+        if (cnResponse && cnResponse.data) {
+            var m3u8Data = extractM3u8FromHtml(cnResponse.data);
             if (m3u8Data) {
-                m3u8Data.source = 'www';
-                console.log("从国际站点获取成功，质量: " + m3u8Data.quality);
+                m3u8Data.source = 'cn';
                 return m3u8Data;
             }
         }
 
-        throw new Error("无法从任何站点获取视频播放链接");
+        throw new Error("无法从 cn.pornhub.com 获取视频播放链接");
     } catch (error) {
-        console.log("获取视频 " + viewkey + " 的播放链接失败: " + error.message);
+        console.log("getVideoM3u8Link error: " + error.message);
         throw error;
     }
 }
 
-// 检测页面分页信息 - 减少代码冗余
+
+// 检测页面分页信息
 function detectPagination(htmlContent, requestedPage) {
     // 初始化页码
     var page = Math.max(1, Number(requestedPage) || 1);
@@ -911,13 +871,14 @@ async function loadDetail(link) {
             throw new Error("无法获取视频播放链接");
         }
 
-        // 4. 推荐视频区块采集
+        // 4. 推荐视频区块采集，限制最多10条，去掉循环体log
         const recommendedVideos = [];
         const recommendedItems = $(".videos.underplayer-thumbs.fixedSizeThumbsVideosListing li[data-video-vkey]");
         recommendedItems.slice(0, 10).each(function (i, element) {
             const $element = $(element);
             const vkey = extractViewkey($, element);
             if (!vkey) return;
+            // 极简字段采集
             const title = $element.find('.title').text().trim() || $element.find('a[title]').attr('title') || '';
             const img = $element.find('img');
             const coverUrl = img.attr('src') || img.attr('data-thumb') || img.attr('data-src') || '';
