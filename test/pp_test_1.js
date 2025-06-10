@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.6",
+    version: "6.0.2",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -153,25 +153,101 @@ WidgetMetadata = {
                 }
             ]
         },
+,
         {
-            id: "hotVideos",  // 热门视频模块
+            id: "hotVideos",
             title: "热门视频",
             functionName: "getHotVideos",
             cacheDuration: 120,
             params: [
                 {
-                    name: "cc",
-                    title: "热门视频",
+                    name: "country",
+                    title: "国家/地区",
                     type: "enumeration",
-                    description: "选择显示热门视频的国家",
+                    description: "选择国家或地区",
+                    value: "world",
                     enumOptions: [
-                        { title: "全球", value: "world" },
-                        { title: "美国", value: "US" },
-                        { title: "日本", value: "JP" },
-                        { title: "韩国", value: "KR" },
-                        // 可以继续添加其他国家
-                    ],
-                    value: "world"
+                        {
+                            title: "全世界",
+                            value: "world"
+                        },
+                        {
+                            title: "美国",
+                            value: "us"
+                        },
+                        {
+                            title: "英国",
+                            value: "gb"
+                        },
+                        {
+                            title: "加拿大",
+                            value: "ca"
+                        },
+                        {
+                            title: "德国",
+                            value: "de"
+                        },
+                        {
+                            title: "法国",
+                            value: "fr"
+                        },
+                        {
+                            title: "意大利",
+                            value: "it"
+                        },
+                        {
+                            title: "西班牙",
+                            value: "es"
+                        },
+                        {
+                            title: "日本",
+                            value: "jp"
+                        },
+                        {
+                            title: "韩国",
+                            value: "kr"
+                        },
+                        {
+                            title: "澳大利亚",
+                            value: "au"
+                        },
+                        {
+                            title: "巴西",
+                            value: "br"
+                        },
+                        {
+                            title: "俄罗斯",
+                            value: "ru"
+                        },
+                        {
+                            title: "印度",
+                            value: "in"
+                        },
+                        {
+                            title: "中国",
+                            value: "cn"
+                        },
+                        {
+                            title: "荷兰",
+                            value: "nl"
+                        },
+                        {
+                            title: "瑞典",
+                            value: "se"
+                        },
+                        {
+                            title: "挪威",
+                            value: "no"
+                        },
+                        {
+                            title: "丹麦",
+                            value: "dk"
+                        },
+                        {
+                            title: "芬兰",
+                            value: "fi"
+                        }
+                    ]
                 },
                 {
                     name: "page",
@@ -804,73 +880,85 @@ function getUserUploads(params) {
     });
 }
 
-function getHotVideos(params) {
-    return new Promise(function (resolve, reject) {
-        try {
-            console.log("开始获取热门视频: " + JSON.stringify(params));
-            if (!params.cc) {
-                console.log("错误: 未提供国家代码");
-                reject(new Error("请提供国家代码"));
-                return;
-            }
+// 获取热门视频列表
+async function getHotVideos(params) {
+    try {
+        var country = params.country || "world";
+        var page = Math.max(1, Number(params.page) || 1);
 
-            var baseUrl = "https://cn.pornhub.com/video?o=ht&cc=" + params.cc + "&page=" + params.page;
-            console.log("基础URL: " + baseUrl);
-
-            Widget.http.get(baseUrl, {
-                headers: {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                    "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-                    "Referer": "https://cn.pornhub.com/"
-                }
-            }).then(function (response) {
-                if (!response || !response.data) {
-                    console.log("错误: 获取热门视频失败，无响应或响应无数据");
-                    reject(new Error("获取热门视频失败"));
-                    return;
-                }
-
-                var $ = Widget.html.load(response.data);
-                var videoItems = [];
-                var processedViewkeys = {}; // 用于去重
-
-                // 假设每个视频项是包含在一个 <div> 中，查找所有视频元素
-                $(".pcVideoListItem, .videoBox, .videoblock").each(function (index, element) {
-                    var viewkey = extractViewkey($, element);
-                    if (viewkey && !processedViewkeys[viewkey]) {
-                        var videoInfo = {
-                            id: viewkey,
-                            title: $(element).find('.title').text(),
-                            thumbnailUrl: $(element).find('img').attr('data-src'),
-                            previewUrl: $(element).find('.preview').attr('data-src'),
-                            link: "https://cn.pornhub.com/view_video.php?viewkey=" + viewkey
-                        };
-
-                        videoItems.push(videoInfo);
-                        processedViewkeys[viewkey] = true; // 标记为已处理
-                    }
-                });
-
-                if (videoItems.length === 0) {
-                    reject(new Error("未找到任何热门视频项"));
-                    return;
-                }
-
-                console.log("成功提取 " + videoItems.length + " 个热门视频");
-                resolve(videoItems);
-            }).catch(function (error) {
-                console.log("获取热门视频失败: " + error.message);
-                reject(error);
-            });
-        } catch (error) {
-            console.log("获取热门视频失败: " + error.message);
-            reject(error);
+        // 构建URL - 基础URL：https://cn.pornhub.com/video?o=ht&cc=国家代码&page=页码
+        var url = "https://cn.pornhub.com/video?o=ht";
+        
+        // 添加国家代码参数
+        if (country && country !== "world") {
+            url += "&cc=" + encodeURIComponent(country);
+        } else {
+            url += "&cc=world";
         }
-    });
+        
+        // 添加页码参数
+        if (page > 1) {
+            url += "&page=" + page;
+        }
+
+        console.log("请求热门视频URL: " + url);
+
+        // 统一请求头
+        var headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+            "Referer": "https://cn.pornhub.com/",
+            "Host": "cn.pornhub.com"
+        };
+
+        var response = await Widget.http.get(url, { headers: headers });
+
+        if (!response || !response.data) {
+            throw new Error("无法获取热门视频页面");
+        }
+
+        var $ = Widget.cheerio.load(response.data);
+        var videos = [];
+
+        // 查找视频元素 - 使用多种可能的选择器
+        var videoElements = $('.videoblock, .phimage, .pcVideoListItem, .videoBox, .wrap, .video-item, .video-wrapper, .thumbnail-info-wrapper');
+
+        console.log("找到视频元素数量: " + videoElements.length);
+
+        videoElements.each(function (index, element) {
+            try {
+                var viewkey = extractViewkey($, element);
+                if (viewkey) {
+                    var videoInfo = extractVideoInfo($, element, viewkey);
+                    videos.push(videoInfo);
+                }
+            } catch (error) {
+                console.log("处理视频元素失败: " + error.message);
+            }
+        });
+
+        // 检测分页信息
+        var paginationInfo = detectPagination(response.data, page);
+
+        console.log("热门视频获取完成，共 " + videos.length + " 个视频");
+
+        return {
+            videos: videos,
+            pagination: {
+                currentPage: paginationInfo.currentPage,
+                maxPage: paginationInfo.maxPage,
+                hasNext: paginationInfo.currentPage < paginationInfo.maxPage,
+                hasPrev: paginationInfo.currentPage > 1
+            }
+        };
+
+    } catch (error) {
+        console.log("getHotVideos error: " + error.message);
+        throw error;
+    }
 }
-
-
-
 
 
 // 加载视频详情函数
