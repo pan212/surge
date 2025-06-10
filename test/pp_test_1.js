@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.2",
+    version: "6.0.6",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -922,7 +922,7 @@ async function getHotVideos(params) {
         var videos = [];
 
         // 查找视频元素 - 使用多种可能的选择器
-        var videoElements = $('.videoblock, .phimage, .pcVideoListItem, .videoBox, .wrap, .video-item, .video-wrapper, .thumbnail-info-wrapper');
+        var videoElements = $(".videoblock, .phimage, .pcVideoListItem, .videoBox, .wrap, .video-item, .video-wrapper, .thumbnail-info-wrapper");
 
         console.log("找到视频元素数量: " + videoElements.length);
 
