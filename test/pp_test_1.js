@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.1",
+    version: "6.0.6",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -808,18 +808,15 @@ function getHotVideos(params) {
     return new Promise(function (resolve, reject) {
         try {
             console.log("开始获取热门视频: " + JSON.stringify(params));
-            // 参数验证
             if (!params.cc) {
                 console.log("错误: 未提供国家代码");
                 reject(new Error("请提供国家代码"));
                 return;
             }
 
-            // 构建基础URL
             var baseUrl = "https://cn.pornhub.com/video?o=ht&cc=" + params.cc + "&page=" + params.page;
             console.log("基础URL: " + baseUrl);
 
-            // 请求热门视频页面
             Widget.http.get(baseUrl, {
                 headers: {
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -833,51 +830,33 @@ function getHotVideos(params) {
                     return;
                 }
 
-                // 打印响应数据的结构，确保数据包含视频项
-                console.log("响应数据: " + JSON.stringify(response.data));
+                var $ = Widget.html.load(response.data);
+                var videoItems = [];
+                var processedViewkeys = {}; // 用于去重
 
-                // 假设响应是字典类型，包含一个`videos`字段
-                var data = response.data;
-                var videos = data.videos || [];  // 获取视频数组
+                // 假设每个视频项是包含在一个 <div> 中，查找所有视频元素
+                $(".pcVideoListItem, .videoBox, .videoblock").each(function (index, element) {
+                    var viewkey = extractViewkey($, element);
+                    if (viewkey && !processedViewkeys[viewkey]) {
+                        var videoInfo = {
+                            id: viewkey,
+                            title: $(element).find('.title').text(),
+                            thumbnailUrl: $(element).find('img').attr('data-src'),
+                            previewUrl: $(element).find('.preview').attr('data-src'),
+                            link: "https://cn.pornhub.com/view_video.php?viewkey=" + viewkey
+                        };
 
-                if (videos.length === 0) {
+                        videoItems.push(videoInfo);
+                        processedViewkeys[viewkey] = true; // 标记为已处理
+                    }
+                });
+
+                if (videoItems.length === 0) {
                     reject(new Error("未找到任何热门视频项"));
                     return;
                 }
 
-                // 处理每个视频项
-                var processedViewkeys = {}; // 用于去重
-                var videoItems = [];
-
-                videos.forEach(function (item) {
-                    try {
-                        var viewkey = item.viewkey;
-                        if (!viewkey || processedViewkeys[viewkey]) {
-                            return; // 跳过无效项或已处理的项
-                        }
-
-                        // 提取视频信息
-                        var videoInfo = {
-                            id: viewkey,
-                            title: item.title,
-                            thumbnailUrl: item.thumbnailUrl,
-                            previewUrl: item.previewUrl,
-                            link: "https://cn.pornhub.com/view_video.php?viewkey=" + viewkey
-                        };
-
-                        // 添加到视频数组
-                        videoItems.push(videoInfo);
-
-                        // 标记为已处理
-                        processedViewkeys[viewkey] = true;
-
-                    } catch (error) {
-                        console.log("处理视频项时出错: " + error.message);
-                    }
-                });
-
                 console.log("成功提取 " + videoItems.length + " 个热门视频");
-
                 resolve(videoItems);
             }).catch(function (error) {
                 console.log("获取热门视频失败: " + error.message);
@@ -889,6 +868,7 @@ function getHotVideos(params) {
         }
     });
 }
+
 
 
 
