@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.2",
+    version: "6.0.1",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -219,7 +219,38 @@ WidgetMetadata = {
                 ]
             }
         }
-    ]
+    ],
+    search: {
+        title: "全站关键词搜索",
+        functionName: "search",
+        params: [
+            {
+                name: "keyword",
+                title: "关键词",
+                type: "input",
+                description: "请输入要搜索的关键词"
+            },
+            {
+                name: "page",
+                title: "页码",
+                type: "page",
+                description: "搜索结果页码",
+                value: "1"
+            },
+            {
+                name: "sort_by",
+                title: "排序方式",
+                type: "enumeration",
+                description: "视频排序方式",
+                value: "default",
+                enumOptions: [
+                    { title: "最新发布", value: "default" },
+                    { title: "最多播放", value: "views" },
+                    { title: "最高评分", value: "rating" }
+                ]
+            }
+        ]
+    }
 };
 
 // 通用工具函数 - 减少代码冗余
@@ -966,6 +997,55 @@ function getUserUploads(params) {
         }
     });
 }
+async function search(params = {}) {
+    try {
+        if (!params.keyword || !params.keyword.trim()) {
+            throw new Error("请输入要搜索的关键词");
+        }
+        const keyword = encodeURIComponent(params.keyword.trim());
+        const page = Math.max(1, Number(params.page) || 1);
+        const sortParam = getSortParam(params.sort_by);
+        let baseUrl = `https://cn.pornhub.com/video/search?search=${keyword}`;
+        if (sortParam) baseUrl += `&${sortParam}`;
+        if (page > 1) baseUrl += `&page=${page}`;
+        const response = await Widget.http.get(baseUrl, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+                "Referer": "https://cn.pornhub.com/"
+            }
+        });
+        if (!response || !response.data) {
+            throw new Error("获取搜索结果失败，未获取到有效响应");
+        }
+        if (response.data.includes("As you may know, your elected officials") ||
+            response.data.includes("Trust and Safety measures")) {
+            throw new Error("无法访问Pornhub，可能存在地区限制");
+        }
+        const $ = Widget.html.load(response.data);
+        let videos = [];
+        let processedViewkeys = {};
+        let videoItems = $(".pcVideoListItem, .videoblock, .videoBox");
+        if (!videoItems.length) {
+            videoItems = $("[data-video-vkey], [data-id], a[href*='viewkey=']").closest("li, div.videoblock, div.videoBox");
+        }
+        if (!videoItems.length) {
+            throw new Error("未找到任何搜索结果，请更换关键词重试");
+        }
+        videoItems.each(function (idx, element) {
+            try {
+                let viewkey = extractViewkey($, element);
+                if (!viewkey || processedViewkeys[viewkey]) return;
+                let videoInfo = extractVideoInfo($, element, viewkey);
+                videos.push(videoInfo);
+                processedViewkeys[viewkey] = true;
+            } catch (err) {}
+        });
+        return videos;
+    } catch (error) {
+        throw error;
+    }
+}
 
 // 加载视频详情函数 - 由播放器系统管理缓存
 async function loadDetail(link) {
@@ -1020,5 +1100,6 @@ module.exports = {
     metadata: WidgetMetadata,
     getFavorites: getFavorites,
     getUserUploads: getUserUploads,
+    search: search,
     loadDetail: loadDetail
 };
