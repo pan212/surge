@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.3",
+    version: "6.0.1",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -915,6 +915,19 @@ async function loadDetail(link) {
 
         const viewkey = viewkeyMatch[1];
 
+        // 构建完整的视频 URL
+        const fullVideoUrl = `https://cn.pornhub.com/view_video.php?viewkey=${viewkey}`;
+
+        // 获取当前视频详情页的 HTML
+        const response = await Widget.http.get(fullVideoUrl, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            },
+        });
+
+        const htmlContent = response.data;
+        const $ = Widget.html.load(htmlContent);
+
         // 获取 m3u8 播放链接，不做缓存处理，由播放器系统管理
         const m3u8Data = await getVideoM3u8Link(viewkey);
 
@@ -922,15 +935,6 @@ async function loadDetail(link) {
             console.log(`错误: 无法获取视频播放链接`);
             throw new Error("无法获取视频播放链接");
         }
-
-        // 获取当前视频详情页的 HTML
-        const response = await Widget.http.get(link, {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-            },
-        });
-        const htmlContent = response.data;
-        const $ = Widget.html.load(htmlContent);
 
         // 获取视频的推荐区块
         const recommendedVideos = [];
@@ -953,9 +957,6 @@ async function loadDetail(link) {
                 });
             }
         });
-
-        // 构建完整的视频 URL
-        const fullVideoUrl = `https://cn.pornhub.com/view_video.php?viewkey=${viewkey}`;
 
         // 返回 Forward 兼容的详情对象
         const result = {
@@ -984,7 +985,6 @@ async function loadDetail(link) {
         throw error;
     }
 }
-
 
 
 // 导出模块
