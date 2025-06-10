@@ -874,6 +874,84 @@ async function getHotVideos(params) {
         console.log("getHotVideos error: " + error.message);
         throw error;
     }
+async function getHotVideos(params = {}) {
+    const cc = params.cc || "world";  // 默认全世界
+    const page = params.page || 1;  // 默认第一页
+
+    // 构建URL，cc=world表示全世界，其他则按国家代码来
+    const url = `https://cn.pornhub.com/video?o=ht&cc=${cc}&page=${page}`;
+    
+    // 打印请求的URL和参数，确保请求是正确的
+    console.log(`请求热门视频 URL: ${url}`);
+
+    try {
+        // 获取页面HTML内容
+        const response = await Widget.http.get(url, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+            }
+        });
+
+        console.log("网络请求成功，响应状态：", response.status);  // 打印响应状态，确保请求成功
+
+        const htmlContent = response.data;
+        console.log("返回的HTML内容：", htmlContent);  // 打印返回的HTML内容，检查是否包含视频数据
+
+        // 使用 Widget.html.load 解析 HTML
+        const $ = Widget.html.load(htmlContent);
+        if (!$) {
+            console.log("解析HTML失败，无法加载 Widget.html.load");
+            throw new Error("无法加载HTML内容，请检查Widget.html.load是否正确配置");
+        }
+
+        // 解析视频项
+        const items = [];
+        $(".pcVideoListItem.js-pop.videoblock.videoBox").each(function () {
+            const $item = $(this);
+            const vkey = $item.attr('data-video-vkey');  // 获取viewkey
+            if (!vkey) {
+                console.log("跳过一个视频项：没有viewkey");
+                return;  // 如果没有viewkey则跳过
+            }
+
+            // 获取视频标题
+            const title = $item.find(".title a").attr("title") || $item.find(".title").text().trim();
+            // 获取视频链接
+            let link = $item.find(".title a").attr("href") || "";
+            if (link && !/^https?:\/\//.test(link)) {
+                link = "https://cn.pornhub.com" + link;  // 补全链接
+            }
+
+            // 获取封面图
+            const img = $item.find("img");
+            const coverUrl = img.attr("src") || img.attr("data-thumb") || img.attr("data-src") || "";
+            const previewUrl = img.attr("data-mediabook") || img.attr("data-preview") || img.attr("data-webm") || "";
+
+            // 获取视频时长
+            const durationText = $item.find(".duration, .videoDuration").text().trim();
+
+            // 将视频项推送到items数组
+            items.push({
+                id: vkey,
+                type: "link",
+                title: title,
+                coverUrl: coverUrl,
+                previewUrl: previewUrl,
+                durationText: durationText,
+                link: link
+            });
+        });
+
+        console.log("提取的视频项：", items);  // 打印提取到的视频数据
+
+        // 返回视频列表（数组格式）
+        return items;  // 返回items数组，符合ForwardWidget期望格式
+
+    } catch (error) {
+        console.error("获取热门视频失败: ", error.message);  // 错误信息打印
+        throw new Error("获取热门视频失败: " + error.message);  // 返回异常错误
+    }
 }
 
 
