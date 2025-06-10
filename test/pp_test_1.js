@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.2",
+    version: "6.0.1",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -903,62 +903,88 @@ function getUserUploads(params) {
 
 // 加载视频详情函数
 async function loadDetail(link) {
-    const response = await Widget.http.get(link, {
-        headers: {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        },
-    });
+    try {
+        console.log(`开始加载视频详情: ${link}`);
 
-    // 获取页面HTML内容
-    const htmlContent = response.data;
-    const $ = Widget.html.load(htmlContent);
-
-    // 获取视频的推荐区块
-    const recommendedVideos = [];
-    const recommendedItems = $(".videos.underplayer-thumbs.fixedSizeThumbsVideosListing .video-box"); // 推荐视频区域的选择器
-
-    recommendedItems.each((i, element) => {
-        const $item = $(element);
-        const viewkey = $item.data("video-vkey"); // 获取推荐视频的viewkey
-        const title = $item.find(".title").text(); // 获取推荐视频的标题
-        const thumbnail = $item.find("img").attr("src"); // 获取推荐视频的封面图
-
-        // 构建推荐视频对象
-        if (viewkey) {
-            recommendedVideos.push({
-                id: viewkey,
-                type: "link",
-                title: title,
-                coverUrl: thumbnail,
-                link: "/view_video.php?viewkey=" + viewkey
-            });
+        // 从 link 中提取 viewkey
+        const viewkeyMatch = link.match(/viewkey=([^&]+)/);
+        if (!viewkeyMatch || !viewkeyMatch[1]) {
+            console.log(`错误: 无效的视频链接 ${link}`);
+            throw new Error("无效的视频链接");
         }
-    });
 
-    // 获取当前视频的HLS流链接
-    const hlsUrl = response.data.match(/var hlsUrl = '(.*?)';/)[1];
-    if (!hlsUrl) {
-        throw new Error("无法获取有效的HLS URL");
+        const viewkey = viewkeyMatch[1];
+
+        // 获取 m3u8 播放链接，不做缓存处理，由播放器系统管理
+        const m3u8Data = await getVideoM3u8Link(viewkey);
+
+        if (!m3u8Data || !m3u8Data.videoUrl) {
+            console.log(`错误: 无法获取视频播放链接`);
+            throw new Error("无法获取视频播放链接");
+        }
+
+        // 获取当前视频详情页的 HTML
+        const response = await Widget.http.get(link, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            },
+        });
+        const htmlContent = response.data;
+        const $ = Widget.html.load(htmlContent);
+
+        // 获取视频的推荐区块
+        const recommendedVideos = [];
+        const recommendedItems = $(".videos.underplayer-thumbs.fixedSizeThumbsVideosListing .video-box"); // 推荐视频区域的选择器
+
+        recommendedItems.each((i, element) => {
+            const $item = $(element);
+            const viewkey = $item.data("video-vkey"); // 获取推荐视频的 viewkey
+            const title = $item.find(".title").text(); // 获取推荐视频的标题
+            const thumbnail = $item.find("img").attr("src"); // 获取推荐视频的封面图
+
+            // 构建推荐视频对象
+            if (viewkey) {
+                recommendedVideos.push({
+                    id: viewkey,
+                    type: "link",
+                    title: title,
+                    coverUrl: thumbnail,
+                    link: "/view_video.php?viewkey=" + viewkey
+                });
+            }
+        });
+
+        // 构建完整的视频 URL
+        const fullVideoUrl = `https://cn.pornhub.com/view_video.php?viewkey=${viewkey}`;
+
+        // 返回 Forward 兼容的详情对象
+        const result = {
+            id: viewkey,
+            type: "detail", // 必须是 detail 类型
+            videoUrl: m3u8Data.videoUrl,
+            customHeaders: {
+                "Referer": fullVideoUrl,
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            },
+            quality: m3u8Data.quality,
+            title: "视频播放",
+            duration: 0,
+            formats: m3u8Data.formats
+        };
+
+        // 如果有推荐视频，则将推荐视频作为 childItems 返回
+        if (recommendedVideos.length > 0) {
+            result.childItems = recommendedVideos;
+        }
+
+        console.log(`视频详情加载成功: ${JSON.stringify({ id: result.id, quality: result.quality, source: m3u8Data.source })}`);
+        return result;
+    } catch (error) {
+        console.log(`loadDetail 执行失败: ${error.message}`);
+        throw error;
     }
-
-    // 构建当前视频的详情对象
-    const item = {
-        id: link,
-        type: "detail",
-        videoUrl: hlsUrl,
-        customHeaders: {
-            "Referer": link,
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        },
-    };
-
-    // 如果有推荐视频，则将推荐视频作为 childItems 返回
-    if (recommendedVideos.length > 0) {
-        item.childItems = recommendedVideos;
-    }
-
-    return item;
 }
+
 
 
 // 导出模块
