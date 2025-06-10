@@ -154,6 +154,7 @@ WidgetMetadata = {
             ]
         },
         {
+            id: "hotVideos",
             title: "热门视频",
             description: "浏览最热门视频",
             requiresWebView: false,
