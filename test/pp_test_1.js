@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.1",
+    version: "6.0.2",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -958,7 +958,7 @@ async function loadDetail(link) {
             }
         });
 
-        // 返回 Forward 兼容的详情对象
+        // 返回 Forward 兼容的详情对象，直接将推荐视频加入 childItems 字段
         const result = {
             id: viewkey,
             type: "detail", // 必须是 detail 类型
@@ -970,13 +970,9 @@ async function loadDetail(link) {
             quality: m3u8Data.quality,
             title: "视频播放",
             duration: 0,
-            formats: m3u8Data.formats
+            formats: m3u8Data.formats,
+            childItems: recommendedVideos // 直接将推荐视频作为 childItems 返回
         };
-
-        // 如果有推荐视频，则将推荐视频作为 childItems 返回
-        if (recommendedVideos.length > 0) {
-            result.childItems = recommendedVideos;
-        }
 
         console.log(`视频详情加载成功: ${JSON.stringify({ id: result.id, quality: result.quality, source: m3u8Data.source })}`);
         return result;
