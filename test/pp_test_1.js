@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.1",
+    version: "6.0.2",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -55,7 +55,19 @@ WidgetMetadata = {
                         }
                     ]
                 }
-            ]
+            ],
+            search: {
+                title: "本地筛选",
+                functionName: "search",
+                params: [
+                    {
+                        name: "keyword",
+                        title: "关键词",
+                        type: "input",
+                        description: "输入关键词本地筛选结果"
+                    }
+                ]
+            }
         },
         {
             id: "searchUser",
@@ -72,7 +84,37 @@ WidgetMetadata = {
                         paramName: "sort_by",
                         value: ["default", "views", "rating"],
                     },
-                    enumOptions: [{ 'title': 'HongKongDoll', 'value': 'HongKongDoll' }, { 'title': '798DS', 'value': '798DS' }, { 'title': 'aiwanxiongxiong', 'value': 'aiwanxiongxiong' }, { 'title': 'andmlove', 'value': 'andmlove' }, { 'title': 'ano ano chan', 'value': 'ano ano chan' }, { 'title': 'bibi Fluffy', 'value': 'bibi Fluffy' }, { 'title': 'CandyKissVip', 'value': 'CandyKissVip' }, { 'title': 'Chinese Bunny', 'value': 'Chinese Bunny' }, { 'title': 'DemiFairyTW', 'value': 'DemiFairyTW' }, { 'title': 'Elle Lee', 'value': 'Elle Lee' }, { 'title': 'Eve', 'value': 'Eve' }, { 'title': 'fortunecutie', 'value': 'fortunecutie' }, { 'title': 'LIs Evans', 'value': 'LIs Evans' }, { 'title': 'loliiiiipop99', 'value': 'loliiiiipop99' }, { 'title': 'Makissse', 'value': 'Makissse' }, { 'title': 'nan12138', 'value': 'nan12138' }, { 'title': 'Nana_taipei', 'value': 'Nana_taipei' }, { 'title': 'Nuomibaby', 'value': 'Nuomibaby' }, { 'title': 'papaxmama', 'value': 'papaxmama' }, { 'title': 'Qiobnxingcaiii', 'value': 'Qiobnxingcaiii' }, { 'title': 'SakuraCandy', 'value': 'SakuraCandy' }, { 'title': 'sskok16', 'value': 'sskok16' }, { 'title': 'SSR Peach', 'value': 'SSR Peach' }, { 'title': 'thelittlejuicer', 'value': 'thelittlejuicer' }, { 'title': 'TLMS_SVJ', 'value': 'TLMS_SVJ' }, { 'title': 'twtutu', 'value': 'twtutu' }, { 'title': 'Vita Won', 'value': 'Vita Won' }, { 'title': 'Yuqiao Chen', 'value': 'Yuqiao Chen' }, { 'title': 'YuzuKitty', 'value': 'YuzuKitty' }]
+                    enumOptions: [
+                        { 'title': 'HongKongDoll', 'value': 'HongKongDoll' },
+                        { 'title': '798DS', 'value': '798DS' },
+                        { 'title': 'aiwanxiongxiong', 'value': 'aiwanxiongxiong' },
+                        { 'title': 'andmlove', 'value': 'andmlove' },
+                        { 'title': 'ano ano chan', 'value': 'ano ano chan' },
+                        { 'title': 'bibi Fluffy', 'value': 'bibi Fluffy' },
+                        { 'title': 'CandyKissVip', 'value': 'CandyKissVip' },
+                        { 'title': 'Chinese Bunny', 'value': 'Chinese Bunny' },
+                        { 'title': 'DemiFairyTW', 'value': 'DemiFairyTW' },
+                        { 'title': 'Elle Lee', 'value': 'Elle Lee' },
+                        { 'title': 'Eve', 'value': 'Eve' },
+                        { 'title': 'fortunecutie', 'value': 'fortunecutie' },
+                        { 'title': 'LIs Evans', 'value': 'LIs Evans' },
+                        { 'title': 'loliiiiipop99', 'value': 'loliiiiipop99' },
+                        { 'title': 'Makissse', 'value': 'Makissse' },
+                        { 'title': 'nan12138', 'value': 'nan12138' },
+                        { 'title': 'Nana_taipei', 'value': 'Nana_taipei' },
+                        { 'title': 'Nuomibaby', 'value': 'Nuomibaby' },
+                        { 'title': 'papaxmama', 'value': 'papaxmama' },
+                        { 'title': 'Qiobnxingcaiii', 'value': 'Qiobnxingcaiii' },
+                        { 'title': 'SakuraCandy', 'value': 'SakuraCandy' },
+                        { 'title': 'sskok16', 'value': 'sskok16' },
+                        { 'title': 'SSR Peach', 'value': 'SSR Peach' },
+                        { 'title': 'thelittlejuicer', 'value': 'thelittlejuicer' },
+                        { 'title': 'TLMS_SVJ', 'value': 'TLMS_SVJ' },
+                        { 'title': 'twtutu', 'value': 'twtutu' },
+                        { 'title': 'Vita Won', 'value': 'Vita Won' },
+                        { 'title': 'Yuqiao Chen', 'value': 'Yuqiao Chen' },
+                        { 'title': 'YuzuKitty', 'value': 'YuzuKitty' }
+                    ]
                 },
                 {
                     name: "sort_by",
@@ -102,7 +144,19 @@ WidgetMetadata = {
                     description: "艺人视频页码",
                     value: "1"
                 }
-            ]
+            ],
+            search: {
+                title: "本地筛选",
+                functionName: "search",
+                params: [
+                    {
+                        name: "keyword",
+                        title: "关键词",
+                        type: "input",
+                        description: "输入关键词本地筛选结果"
+                    }
+                ]
+            }
         },
         {
             id: "premiumArtists",
@@ -151,54 +205,21 @@ WidgetMetadata = {
                         }
                     ]
                 }
-            ]
-        }
-    ],
-    search: {
-        title: "搜索",
-        functionName: "search",
-        params: [
-            {
-                name: "keyword",
-                title: "关键词",
-                type: "input",
-                description: "搜索关键词",
-                value: ""
-            },
-            {
-                name: "page",
-                title: "页码",
-                type: "page",
-                description: "搜索结果页码",
-                value: "1"
-            },
-            {
-                name: "sort_by",
-                title: "排序方式",
-                type: "enumeration",
-                description: "视频排序方式",
-                value: "relevance",
-                enumOptions: [
+            ],
+            search: {
+                title: "本地筛选",
+                functionName: "search",
+                params: [
                     {
-                        title: "相关度",
-                        value: "relevance"
-                    },
-                    {
-                        title: "最新发布",
-                        value: "newest"
-                    },
-                    {
-                        title: "最多播放",
-                        value: "mostviewed"
-                    },
-                    {
-                        title: "最高评分",
-                        value: "toprated"
+                        name: "keyword",
+                        title: "关键词",
+                        type: "input",
+                        description: "输入关键词本地筛选结果"
                     }
                 ]
             }
-        ]
-    }
+        }
+    ]
 };
 
 // 通用工具函数 - 减少代码冗余
@@ -1001,44 +1022,3 @@ module.exports = {
     getUserUploads: getUserUploads,
     loadDetail: loadDetail
 };
-
-
-// 搜索功能实现
-async function search(params = {}) {
-    try {
-        const keyword = params.keyword || "";
-        const page = params.page || 1;
-        const sortBy = params.sort_by || "relevance";
-
-        if (!keyword) {
-            throw new Error("搜索关键词不能为空");
-        }
-
-        const url = `https://www.pornhub.com/video/search?search=${encodeURIComponent(keyword)}&page=${page}&o=${sortBy}`;
-
-        const response = await Widget.http.get(url, {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-                Referer: "https://www.pornhub.com/",
-            },
-        });
-
-        const $ = Widget.html.load(response.data);
-        const videoElements = $(".pcVideoListItem");
-
-        const results = [];
-        videoElements.each(function () {
-            const viewkey = extractViewkey($, this);
-            if (viewkey) {
-                results.push(extractVideoInfo($, this, viewkey));
-            }
-        });
-
-        return results;
-    } catch (error) {
-        console.error("搜索失败:", error);
-        throw error;
-    }
-}
-
-
