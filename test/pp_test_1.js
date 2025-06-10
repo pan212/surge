@@ -806,15 +806,18 @@ function getUserUploads(params) {
     });
 }
 
-async function getHotVideos(params = {}) {
-    const cc = params.cc || "kr";
-    const page = params.page || 1;
-
-    // 构建URL
+async function getHotVideos({ cc = "world", page = 1 }) {
+    // 根据国家/地区和页码动态构建URL
     let url;
-    url = `https://cn.pornhub.com/video?o=ht&cc=${cc}&page=${page}`;
+    if (cc === "world") {
+        // 全世界热门视频链接
+        url = `https://cn.pornhub.com/video?o=ht&cc=world&page=${page}`;
+    } else {
+        // 按国家代码获取热门视频
+        url = `https://cn.pornhub.com/video?o=ht&cc=${cc}&page=${page}`;
+    }
 
-    // 获取页面
+    // 获取页面HTML内容
     const response = await Widget.http.get(url, {
         headers: {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -824,24 +827,29 @@ async function getHotVideos(params = {}) {
     const htmlContent = response.data;
     const $ = Widget.html.load(htmlContent);
 
-    // 解析热门视频列表
+    // 解析视频项
     const items = [];
     $("ul.videos.search-video-thumbs > li").each(function () {
         const $item = $(this);
-        const vkey = extractViewkey($, $item);
-        if (!vkey) return;
+        const vkey = extractViewkey($, $item); // 获取视频viewkey
+        if (!vkey) return; // 如果没有viewkey则跳过
 
+        // 获取视频标题、链接
         const title = $item.find(".title a").attr("title") || $item.find(".title").text().trim();
         let link = $item.find(".title a").attr("href") || "";
         if (link && !/^https?:\/\//.test(link)) {
-            link = "https://cn.pornhub.com" + link;
+            link = "https://cn.pornhub.com" + link; // 补全链接
         }
 
+        // 获取封面图
         const img = $item.find("img");
         const coverUrl = img.attr("src") || img.attr("data-thumb") || img.attr("data-src") || "";
         const previewUrl = img.attr("data-mediabook") || img.attr("data-preview") || img.attr("data-webm") || "";
+
+        // 获取视频时长
         const durationText = $item.find(".duration, .videoDuration").text().trim();
 
+        // 推送视频项到结果数组
         items.push({
             id: vkey,
             type: "link",
@@ -853,15 +861,34 @@ async function getHotVideos(params = {}) {
         });
     });
 
+    // 返回视频列表及分页信息
     return {
         id: `hotVideoList-${cc}-${page}`,
         type: "list",
         title: `热门视频 - ${cc.toUpperCase()}`,
-        items,
-        page,
-        hasMore: items.length > 0
+        items: items,
+        page: page,
+        hasMore: items.length > 0  // 判断是否还有更多视频
     };
 }
+
+// 提取viewkey的工具函数（复用）
+function extractViewkey($, element) {
+    const $element = $(element);
+    let vkey = $element.attr('data-video-vkey') || $element.attr('data-id') || $element.attr('id');
+    if (!vkey) {
+        const linkElement = $element.find('a[href*="viewkey="]');
+        if (linkElement.length) {
+            const href = linkElement.attr('href');
+            const keyMatch = href.match(/viewkey=([^&]+)/);
+            if (keyMatch && keyMatch[1]) {
+                vkey = keyMatch[1];
+            }
+        }
+    }
+    return vkey ? vkey.replace(/^(video|vkey|v|vfavouriteVideo)_/, "") : null;
+}
+
 
 // 加载视频详情函数
 async function loadDetail(link) {
