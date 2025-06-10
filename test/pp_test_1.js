@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.2",
+    version: "6.0.3",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -157,7 +157,6 @@ WidgetMetadata = {
             id: "hotVideos",
             title: "热门视频",
             description: "浏览最热门视频",
-            requiresWebView: false,
             functionName: "getHotVideos",
             cacheDuration: 1800, // 30分钟
             params: [
@@ -172,8 +171,7 @@ WidgetMetadata = {
                         { title: "韩国", value: "kr" },
                         { title: "英国", value: "gb" },
                         { title: "法国", value: "fr" },
-                        { title: "德国", value: "de" },
-
+                        { title: "德国", value: "de" }
                         // ...可扩展
                     ],
                     value: "kr"
