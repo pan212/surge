@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.3",
+    version: "6.0.1",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -576,8 +576,11 @@ function getSortParam(sort_by) {
 }
 
 async function getHotVideos(params = {}) {
-    const cc = params.cc || "world";  // 默认全世界
+    const cc = params.country || "world";  // 默认使用 'world'，如果传递了 'country' 参数，则使用它
     const page = params.page || 1;  // 默认第一页
+
+    // 打印检查传入的参数
+    console.log(`请求的国家/地区: ${cc}, 页码: ${page}`);
 
     // 构建URL，cc=world表示全世界，其他则按国家代码来
     const url = `https://cn.pornhub.com/video?o=ht&cc=${cc}&page=${page}`;
@@ -654,6 +657,7 @@ async function getHotVideos(params = {}) {
         throw new Error("获取热门视频失败: " + error.message);  // 返回异常错误
     }
 }
+
 
 // 获取用户上传的视频
 function getUserUploads(params) {
