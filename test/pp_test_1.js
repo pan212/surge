@@ -575,168 +575,69 @@ function getSortParam(sort_by) {
     }
 }
 
-// 获取收藏列表视频
-function getFavorites(params) {
-    return new Promise(function (resolve, reject) {
-        try {
-            console.log("开始获取收藏列表: " + JSON.stringify(params));
-            // 参数验证
-            if (!params.username) {
-                console.log("错误: 未提供用户名");
-                reject(new Error("请提供用户名"));
-                return;
+async function getHotVideos(params = {}) {
+    const cc = params.cc || "world";  // 默认全世界
+    const page = params.page || 1;  // 默认第一页
+
+    // 构建URL，cc=world表示全世界，其他则按国家代码来
+    const url = `https://cn.pornhub.com/video?o=ht&cc=${cc}&page=${page}`;
+
+    try {
+        // 获取页面HTML内容
+        const response = await Widget.http.get(url, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+            }
+        });
+
+        const htmlContent = response.data;
+        const $ = Widget.html.load(htmlContent);
+
+        // 解析视频项
+        const items = [];
+        $(".pcVideoListItem.js-pop.videoblock.videoBox").each(function () {
+            const $item = $(this);
+            const vkey = $item.attr('data-video-vkey');  // 提取viewkey
+            if (!vkey) return;  // 如果没有viewkey则跳过
+
+            // 获取视频标题
+            const title = $item.find(".title a").attr("title") || $item.find(".title").text().trim();
+            // 获取视频链接
+            let link = $item.find(".title a").attr("href") || "";
+            if (link && !/^https?:\/\//.test(link)) {
+                link = "https://cn.pornhub.com" + link;  // 补全链接
             }
 
-            // 构建基础URL
-            var baseUrl = "https://cn.pornhub.com/users/" + params.username + "/videos/favorites";
+            // 获取封面图
+            const img = $item.find("img");
+            const coverUrl = img.attr("src") || img.attr("data-thumb") || img.attr("data-src") || "";
+            const previewUrl = img.attr("data-mediabook") || img.attr("data-preview") || img.attr("data-webm") || "";
 
-            // 添加排序参数
-            var sortParam = getSortParam(params.sort_by);
-            if (sortParam) {
-                baseUrl += "?" + sortParam;
-            }
+            // 获取视频时长
+            const durationText = $item.find(".duration, .videoDuration").text().trim();
 
-            console.log("基础URL: " + baseUrl);
-
-            // 首次请求（用于检测分页）
-            Widget.http.get(baseUrl, {
-                headers: {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                    "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-                    "Referer": "https://cn.pornhub.com/"
-                }
-            }).then(function (firstPageResponse) {
-                // 检查响应
-                if (!firstPageResponse || !firstPageResponse.data) {
-                    console.log("错误: 获取收藏列表失败，无响应或响应无数据");
-                    reject(new Error("获取收藏列表失败，请检查网络连接或用户名是否正确"));
-                    return;
-                }
-
-                // 检查是否有地区限制
-                if (firstPageResponse.data.includes("As you may know, your elected officials") ||
-                    firstPageResponse.data.includes("Trust and Safety measures")) {
-                    console.log("错误: 检测到地区限制");
-                    reject(new Error("无法访问Pornhub，可能存在地区限制"));
-                    return;
-                }
-
-                // 检查是否是空收藏列表
-                if (firstPageResponse.data.includes("没有收藏视频") ||
-                    firstPageResponse.data.includes("No videos found") ||
-                    firstPageResponse.data.includes("empty-list")) {
-                    console.log("收藏列表为空");
-                    resolve([]); // 返回空数组表示没有收藏视频
-                    return;
-                }
-
-                // 检测分页信息
-                var pagination = detectPagination(firstPageResponse.data, params.page);
-                var page = pagination.page;
-
-                // 构建最终URL
-                var fullUrl = baseUrl;
-                if (page > 1) {
-                    // 如果已有排序参数，使用&连接页码参数，否则使用?
-                    fullUrl += (sortParam ? '&' : '?') + "page=" + page;
-                }
-
-                console.log("最终请求URL: " + fullUrl);
-
-                // 如果不是第1页，需要重新请求
-                var responsePromise;
-                if (page > 1) {
-                    responsePromise = Widget.http.get(fullUrl, {
-                        headers: {
-                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-                            "Referer": "https://cn.pornhub.com/"
-                        }
-                    });
-                } else {
-                    responsePromise = Promise.resolve(firstPageResponse);
-                }
-
-                return responsePromise;
-            }).then(function (response) {
-                if (!response || !response.data) {
-                    console.log("错误: 获取页面失败");
-                    reject(new Error("获取收藏列表页面失败"));
-                    return;
-                }
-
-                // 解析HTML
-                var $ = Widget.html.load(response.data);
-
-                // 提取视频列表
-                var videos = [];
-                var processedViewkeys = {}; // 用于去重
-
-                // 尝试多种选择器找到视频项
-                var videoItems = $("#videoFavoritesListSection .pcVideoListItem");
-                if (!videoItems.length) {
-                    videoItems = $("li.pcVideoListItem[id^=\"vfavouriteVideo\"]");
-                }
-                if (!videoItems.length) {
-                    videoItems = $("li.pcVideoListItem, div.videoblock, div.videoBox");
-                }
-
-                console.log("找到 " + videoItems.length + " 个视频项");
-
-                // 如果找不到任何视频项
-                if (videoItems.length === 0) {
-                    var errorMessage = "未找到任何收藏视频项。";
-                    if (response.data.includes("登录") || response.data.includes("Login") ||
-                        response.data.includes("sign in") || response.data.includes("注册")) {
-                        errorMessage += " 这通常需要登录才能查看收藏列表。";
-                    } else {
-                        errorMessage += " 请确认用户名是否正确，或页面结构是否已变化。";
-                    }
-                    reject(new Error(errorMessage));
-                    return;
-                }
-
-                // 处理每个视频项
-                videoItems.each(function (index, element) {
-                    try {
-                        // 提取viewkey
-                        var viewkey = extractViewkey($, element);
-                        if (!viewkey) {
-                            return; // 跳过无效项
-                        }
-
-                        // 检查是否已处理过该viewkey，避免重复添加
-                        if (processedViewkeys[viewkey]) {
-                            return;
-                        }
-
-                        // 提取视频信息
-                        var videoInfo = extractVideoInfo($, element, viewkey);
-
-                        // 添加到结果数组
-                        videos.push(videoInfo);
-
-                        // 添加到已处理集合
-                        processedViewkeys[viewkey] = true;
-
-                    } catch (error) {
-                        console.log("处理视频项时出错: " + error.message);
-                    }
-                });
-
-                console.log("成功提取 " + videos.length + " 个收藏视频");
-
-                resolve(videos);
-            }).catch(function (error) {
-                console.log("获取收藏列表失败: " + error.message);
-                reject(error);
+            // 将视频项推送到items数组
+            items.push({
+                id: vkey,
+                type: "link",
+                title: title,
+                coverUrl: coverUrl,
+                previewUrl: previewUrl,
+                durationText: durationText,
+                link: link
             });
-        } catch (error) {
-            console.log("获取收藏列表失败: " + error.message);
-            reject(error);
-        }
-    });
+        });
+
+        // 返回视频列表（数组格式）
+        return items;  // 返回items数组，符合ForwardWidget期望格式
+
+    } catch (error) {
+        console.error("获取热门视频失败: ", error.message);  // 错误信息打印
+        throw new Error("获取热门视频失败: " + error.message);  // 返回异常错误
+    }
 }
+
 
 // 获取用户上传的视频
 function getUserUploads(params) {
