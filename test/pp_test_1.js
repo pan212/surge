@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.3",
+    version: "6.0.6",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -154,34 +154,32 @@ WidgetMetadata = {
             ]
         },
         {
-            id: "hotVideos",
+            id: "hotVideos",  // 热门视频模块
             title: "热门视频",
-            description: "浏览最热门视频",
-            functionName: "getHotVideos",
-            cacheDuration: 1800, // 30分钟
+            functionName: "getHotVideos",  // 获取热门视频功能
+            cacheDuration: 1800,  // 缓存30分钟
             params: [
                 {
-                    name: "cc",
+                    name: "cc",  // 国家选择
                     title: "国家/地区",
                     type: "enumeration",
                     enumOptions: [
-                        { title: "全部", value: "world" },
+                        { title: "全世界", value: "world" },
                         { title: "美国", value: "us" },
                         { title: "日本", value: "jp" },
                         { title: "韩国", value: "kr" },
                         { title: "英国", value: "gb" },
                         { title: "法国", value: "fr" },
                         { title: "德国", value: "de" }
-                        // ...可扩展
                     ],
-                    value: "kr"
+                    value: "world"
                 },
                 {
                     name: "page",
                     title: "页码",
                     type: "page",
-                    description: "页码",
-                    value: 1
+                    description: "热门视频页码",
+                    value: "1"
                 }
             ]
         }
@@ -807,89 +805,68 @@ function getUserUploads(params) {
 }
 
 async function getHotVideos({ cc = "world", page = 1 }) {
-    // 根据国家/地区和页码动态构建URL
-    let url;
-    if (cc === "world") {
-        // 全世界热门视频链接
-        url = `https://cn.pornhub.com/video?o=ht&cc=world&page=${page}`;
-    } else {
-        // 按国家代码获取热门视频
-        url = `https://cn.pornhub.com/video?o=ht&cc=${cc}&page=${page}`;
-    }
+    try {
+        // 根据国家/地区和页码动态构建URL
+        const url = `https://cn.pornhub.com/video?o=ht&cc=${cc}&page=${page}`;
 
-    // 获取页面HTML内容
-    const response = await Widget.http.get(url, {
-        headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
-        }
-    });
-    const htmlContent = response.data;
-    const $ = Widget.html.load(htmlContent);
-
-    // 解析视频项
-    const items = [];
-    $("ul.videos.search-video-thumbs > li").each(function () {
-        const $item = $(this);
-        const vkey = extractViewkey($, $item); // 获取视频viewkey
-        if (!vkey) return; // 如果没有viewkey则跳过
-
-        // 获取视频标题、链接
-        const title = $item.find(".title a").attr("title") || $item.find(".title").text().trim();
-        let link = $item.find(".title a").attr("href") || "";
-        if (link && !/^https?:\/\//.test(link)) {
-            link = "https://cn.pornhub.com" + link; // 补全链接
-        }
-
-        // 获取封面图
-        const img = $item.find("img");
-        const coverUrl = img.attr("src") || img.attr("data-thumb") || img.attr("data-src") || "";
-        const previewUrl = img.attr("data-mediabook") || img.attr("data-preview") || img.attr("data-webm") || "";
-
-        // 获取视频时长
-        const durationText = $item.find(".duration, .videoDuration").text().trim();
-
-        // 推送视频项到结果数组
-        items.push({
-            id: vkey,
-            type: "link",
-            title: title,
-            coverUrl: coverUrl,
-            previewUrl: previewUrl,
-            durationText: durationText,
-            link: link
-        });
-    });
-
-    // 返回视频列表及分页信息
-    return {
-        id: `hotVideoList-${cc}-${page}`,
-        type: "list",
-        title: `热门视频 - ${cc.toUpperCase()}`,
-        items: items,
-        page: page,
-        hasMore: items.length > 0  // 判断是否还有更多视频
-    };
-}
-
-// 提取viewkey的工具函数（复用）
-function extractViewkey($, element) {
-    const $element = $(element);
-    let vkey = $element.attr('data-video-vkey') || $element.attr('data-id') || $element.attr('id');
-    if (!vkey) {
-        const linkElement = $element.find('a[href*="viewkey="]');
-        if (linkElement.length) {
-            const href = linkElement.attr('href');
-            const keyMatch = href.match(/viewkey=([^&]+)/);
-            if (keyMatch && keyMatch[1]) {
-                vkey = keyMatch[1];
+        // 获取页面HTML内容
+        const response = await Widget.http.get(url, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
             }
-        }
+        });
+        const htmlContent = response.data;
+        const $ = Widget.html.load(htmlContent);
+
+        // 解析视频项
+        const items = [];
+        $("ul.videos.search-video-thumbs > li").each(function () {
+            const $item = $(this);
+            const vkey = extractViewkey($, $item); // 获取视频viewkey
+            if (!vkey) return; // 如果没有viewkey则跳过
+
+            // 获取视频标题、链接
+            const title = $item.find(".title a").attr("title") || $item.find(".title").text().trim();
+            let link = $item.find(".title a").attr("href") || "";
+            if (link && !/^https?:\/\//.test(link)) {
+                link = "https://cn.pornhub.com" + link; // 补全链接
+            }
+
+            // 获取封面图
+            const img = $item.find("img");
+            const coverUrl = img.attr("src") || img.attr("data-thumb") || img.attr("data-src") || "";
+            const previewUrl = img.attr("data-mediabook") || img.attr("data-preview") || img.attr("data-webm") || "";
+
+            // 获取视频时长
+            const durationText = $item.find(".duration, .videoDuration").text().trim();
+
+            // 推送视频项到结果数组
+            items.push({
+                id: vkey,
+                type: "link",
+                title: title,
+                coverUrl: coverUrl,
+                previewUrl: previewUrl,
+                durationText: durationText,
+                link: link
+            });
+        });
+
+        // 返回视频列表及分页信息
+        return {
+            id: `hotVideoList-${cc}-${page}`,
+            type: "list",
+            title: `热门视频 - ${cc.toUpperCase()}`,
+            items: items,
+            page: page,
+            hasMore: items.length > 0  // 判断是否还有更多视频
+        };
+    } catch (error) {
+        console.error("获取热门视频失败: ", error.message);  // 错误信息打印
+        throw new Error("获取热门视频失败: " + error.message);  // 返回异常错误
     }
-    return vkey ? vkey.replace(/^(video|vkey|v|vfavouriteVideo)_/, "") : null;
 }
-
-
 // 加载视频详情函数
 async function loadDetail(link) {
     try {
