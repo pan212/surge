@@ -1,12 +1,12 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.7",
+    version: "6.0.6",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
     site: "https://github.com/Madai-v/ForwardWidgets",
-    detailCacheDuration: 120,
+    detailCacheDuration: 600,
     modules: [
         {
             id: "favorites",
@@ -150,6 +150,39 @@ WidgetMetadata = {
                             value: "rating"
                         }
                     ]
+                }
+            ]
+        },
+        {
+            title: "热门视频",
+            description: "浏览最热门视频",
+            requiresWebView: false,
+            functionName: "getHotVideos",
+            cacheDuration: 1800, // 30分钟
+            params: [
+                {
+                    name: "cc",
+                    title: "国家/地区",
+                    type: "enumeration",
+                    enumOptions: [
+                        { title: "全部", value: "word" },
+                        { title: "美国", value: "us" },
+                        { title: "日本", value: "jp" },
+                        { title: "韩国", value: "kr" },
+                        { title: "英国", value: "gb" },
+                        { title: "法国", value: "fr" },
+                        { title: "德国", value: "de" },
+
+                        // ...可扩展
+                    ],
+                    value: "kr"
+                },
+                {
+                    name: "page",
+                    title: "页码",
+                    type: "page",
+                    description: "页码",
+                    value: 1
                 }
             ]
         }
@@ -774,6 +807,63 @@ function getUserUploads(params) {
     });
 }
 
+async function getHotVideos(params = {}) {
+    const cc = params.cc || "kr";
+    const page = params.page || 1;
+
+    // 构建URL
+    let url;
+    url = `https://cn.pornhub.com/video?o=ht&cc=${cc}&page=${page}`;
+
+    // 获取页面
+    const response = await Widget.http.get(url, {
+        headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+        }
+    });
+    const htmlContent = response.data;
+    const $ = Widget.html.load(htmlContent);
+
+    // 解析热门视频列表
+    const items = [];
+    $("ul.videos.search-video-thumbs > li").each(function () {
+        const $item = $(this);
+        const vkey = extractViewkey($, $item);
+        if (!vkey) return;
+
+        const title = $item.find(".title a").attr("title") || $item.find(".title").text().trim();
+        let link = $item.find(".title a").attr("href") || "";
+        if (link && !/^https?:\/\//.test(link)) {
+            link = "https://cn.pornhub.com" + link;
+        }
+
+        const img = $item.find("img");
+        const coverUrl = img.attr("src") || img.attr("data-thumb") || img.attr("data-src") || "";
+        const previewUrl = img.attr("data-mediabook") || img.attr("data-preview") || img.attr("data-webm") || "";
+        const durationText = $item.find(".duration, .videoDuration").text().trim();
+
+        items.push({
+            id: vkey,
+            type: "link",
+            title: title,
+            coverUrl: coverUrl,
+            previewUrl: previewUrl,
+            durationText: durationText,
+            link: link
+        });
+    });
+
+    return {
+        id: `hotVideoList-${cc}-${page}`,
+        type: "list",
+        title: `热门视频 - ${cc.toUpperCase()}`,
+        items,
+        page,
+        hasMore: items.length > 0
+    };
+}
+
 // 加载视频详情函数
 async function loadDetail(link) {
     try {
@@ -858,5 +948,6 @@ module.exports = {
     metadata: WidgetMetadata,
     getFavorites: getFavorites,
     getUserUploads: getUserUploads,
+    getHotVideos: getHotVideos,
     loadDetail: loadDetail
 };
