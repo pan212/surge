@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.5",
+    version: "6.0.6",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -805,11 +805,14 @@ function getUserUploads(params) {
     });
 }
 
-async function getHotVideos({ cc = "world", page = 1 }) {
-    try {
-        // 根据国家/地区和页码动态构建URL
-        const url = `https://cn.pornhub.com/video?o=ht&cc=${cc}&page=${page}`;
+async function getHotVideos(params = {}) {
+    const cc = params.cc || "world";  // 默认全世界
+    const page = params.page || 1;  // 默认第一页
 
+    // 构建URL，cc=world表示全世界，其他则按国家代码来
+    const url = `https://cn.pornhub.com/video?o=ht&cc=${cc}&page=${page}`;
+
+    try {
         // 获取页面HTML内容
         const response = await Widget.http.get(url, {
             headers: {
@@ -817,21 +820,22 @@ async function getHotVideos({ cc = "world", page = 1 }) {
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
             }
         });
+
         const htmlContent = response.data;
         const $ = Widget.html.load(htmlContent);
 
-        // 解析视频项
+        // 解析视频列表
         const items = [];
         $("ul.videos.search-video-thumbs > li").each(function () {
             const $item = $(this);
             const vkey = extractViewkey($, $item); // 获取视频viewkey
-            if (!vkey) return; // 如果没有viewkey则跳过
+            if (!vkey) return;  // 如果没有viewkey则跳过
 
             // 获取视频标题、链接
             const title = $item.find(".title a").attr("title") || $item.find(".title").text().trim();
             let link = $item.find(".title a").attr("href") || "";
             if (link && !/^https?:\/\//.test(link)) {
-                link = "https://cn.pornhub.com" + link; // 补全链接
+                link = "https://cn.pornhub.com" + link;  // 补全链接
             }
 
             // 获取封面图
@@ -842,7 +846,7 @@ async function getHotVideos({ cc = "world", page = 1 }) {
             // 获取视频时长
             const durationText = $item.find(".duration, .videoDuration").text().trim();
 
-            // 推送视频项到结果数组
+            // 将视频信息推送到items数组
             items.push({
                 id: vkey,
                 type: "link",
@@ -868,6 +872,7 @@ async function getHotVideos({ cc = "world", page = 1 }) {
         throw new Error("获取热门视频失败: " + error.message);  // 返回异常错误
     }
 }
+
 // 加载视频详情函数
 async function loadDetail(link) {
     try {
