@@ -328,7 +328,7 @@ function extractVideoInfo($, element, viewkey) {
         uploadDate: stats.uploadDate
     };
 
-    console.log("视频信息: " + JSON.stringify(videoData));
+    //console.log("视频信息: " + JSON.stringify(videoData));
 
     return videoData;
 }
@@ -911,14 +911,13 @@ async function loadDetail(link) {
             throw new Error("无法获取视频播放链接");
         }
 
-        // 4. 推荐视频区块采集，限制最多10条，去掉循环体log
+        // 4. 推荐视频区块采集
         const recommendedVideos = [];
         const recommendedItems = $(".videos.underplayer-thumbs.fixedSizeThumbsVideosListing li[data-video-vkey]");
         recommendedItems.slice(0, 10).each(function (i, element) {
             const $element = $(element);
             const vkey = extractViewkey($, element);
             if (!vkey) return;
-            // 极简字段采集
             const title = $element.find('.title').text().trim() || $element.find('a[title]').attr('title') || '';
             const img = $element.find('img');
             const coverUrl = img.attr('src') || img.attr('data-thumb') || img.attr('data-src') || '';
