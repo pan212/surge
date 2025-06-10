@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.1.5",
+    version: "6.1.6",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -853,7 +853,9 @@ function getUserUploads(params) {
 }
 
 // 获取热门视频列表
-async function getVideos(params = {}) {
+async function getVideos(originalParams = {}) {
+    // 创建 params 的可写副本，以避免修改只读属性的错误
+    const params = { ...originalParams };
     const cc = params.country;
     const page = params.page || 1;  // 默认第一页
 
