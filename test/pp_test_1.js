@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.6",
+    version: "6.0.7",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -336,96 +336,50 @@ function extractVideoInfo($, element, viewkey) {
 // 从HTML中提取m3u8链接
 function extractM3u8FromHtml(html) {
     try {
-        // 方法1: 提取mediaDefinitions
-        var mediaDefinitionsMatch = html.match(/"mediaDefinitions"\s*:\s*(\[.+?\])/);
-        if (mediaDefinitionsMatch) {
+        // 方法1: mediaDefinitions
+        let match = html.match(/"mediaDefinitions"\s*:\s*(\[.+?\])/);
+        if (match) {
             try {
-                // 尝试解析JSON
-                var cleanJson = mediaDefinitionsMatch[1].replace(/'/g, '"').replace(/,\s*]/g, ']');
-                var mediaDefinitions = JSON.parse(cleanJson);
-
-                // 过滤出m3u8格式的链接
-                var hlsItems = [];
-                for (var i = 0; i < mediaDefinitions.length; i++) {
-                    var item = mediaDefinitions[i];
-                    if (item && item.format === 'hls' && item.videoUrl) {
-                        hlsItems.push(item);
-                    }
-                }
-
+                let defs = JSON.parse(match[1].replace(/'/g, '"').replace(/,\s*]/g, ']'));
+                let hlsItems = defs.filter(item => item && item.format === 'hls' && item.videoUrl);
                 if (hlsItems.length > 0) {
-                    // 按质量排序
-                    hlsItems.sort(function (a, b) {
-                        var qualityA = parseInt(a.quality) || 0;
-                        var qualityB = parseInt(b.quality) || 0;
-                        return qualityB - qualityA; // 降序，最高质量在前
-                    });
-
-                    var bestItem = hlsItems[0];
-                    var formats = [];
-                    for (var j = 0; j < hlsItems.length; j++) {
-                        formats.push({
-                            url: hlsItems[j].videoUrl,
-                            format: hlsItems[j].quality + "p",
-                            ext: 'm3u8',
-                            type: 'hls'
-                        });
-                    }
-
+                    hlsItems.sort((a, b) => (parseInt(b.quality) || 0) - (parseInt(a.quality) || 0));
+                    let formats = hlsItems.map(i => ({
+                        url: i.videoUrl,
+                        format: (i.quality ? i.quality + 'p' : ''),
+                        ext: 'm3u8',
+                        type: 'hls'
+                    }));
                     return {
-                        videoUrl: bestItem.videoUrl,
-                        quality: bestItem.quality + "p",
-                        formats: formats
+                        videoUrl: hlsItems[0].videoUrl,
+                        quality: (hlsItems[0].quality ? hlsItems[0].quality + 'p' : ''),
+                        formats
                     };
                 }
-            } catch (jsonError) {
-                console.log("解析mediaDefinitions JSON失败: " + jsonError.message);
-            }
+            } catch { }
         }
 
-        // 方法2: 提取flashvars
-        var flashvarsMatch = html.match(/var\s+flashvars_\d+\s*=\s*({.+?});/);
-        if (flashvarsMatch) {
+        // 方法2: flashvars
+        match = html.match(/var\s+flashvars_\d+\s*=\s*({.+?});/);
+        if (match) {
             try {
-                var flashvars = JSON.parse(flashvarsMatch[1]);
-                if (flashvars && flashvars.mediaDefinitions && Array.isArray(flashvars.mediaDefinitions)) {
-                    var hlsItems = [];
-                    for (var i = 0; i < flashvars.mediaDefinitions.length; i++) {
-                        var item = flashvars.mediaDefinitions[i];
-                        if (item && item.format === 'hls' && item.videoUrl) {
-                            hlsItems.push(item);
-                        }
-                    }
-
-                    if (hlsItems.length > 0) {
-                        // 按质量排序
-                        hlsItems.sort(function (a, b) {
-                            var qualityA = parseInt(a.quality) || 0;
-                            var qualityB = parseInt(b.quality) || 0;
-                            return qualityB - qualityA; // 降序，最高质量在前
-                        });
-
-                        var bestItem = hlsItems[0];
-                        var formats = [];
-                        for (var j = 0; j < hlsItems.length; j++) {
-                            formats.push({
-                                url: hlsItems[j].videoUrl,
-                                format: hlsItems[j].quality + "p",
-                                ext: 'm3u8',
-                                type: 'hls'
-                            });
-                        }
-
-                        return {
-                            videoUrl: bestItem.videoUrl,
-                            quality: bestItem.quality + "p",
-                            formats: formats
-                        };
-                    }
+                let flashvars = JSON.parse(match[1]);
+                let hlsItems = flashvars.mediaDefinitions?.filter(item => item && item.format === 'hls' && item.videoUrl) || [];
+                if (hlsItems.length > 0) {
+                    hlsItems.sort((a, b) => (parseInt(b.quality) || 0) - (parseInt(a.quality) || 0));
+                    let formats = hlsItems.map(i => ({
+                        url: i.videoUrl,
+                        format: (i.quality ? i.quality + 'p' : ''),
+                        ext: 'm3u8',
+                        type: 'hls'
+                    }));
+                    return {
+                        videoUrl: hlsItems[0].videoUrl,
+                        quality: (hlsItems[0].quality ? hlsItems[0].quality + 'p' : ''),
+                        formats
+                    };
                 }
-            } catch (jsonError) {
-                console.log("解析flashvars JSON失败: " + jsonError.message);
-            }
+            } catch { }
         }
 
         return null;
@@ -770,7 +724,7 @@ function getUserUploads(params) {
                     console.log("警告：页面标题 \"" + pageTitle + "\" 可能不包含艺人名称 \"" + params.username + "\"");
                 }
                 var videos = [];
-                var processedViewkeys = {}; 
+                var processedViewkeys = {};
                 var allVideoItems = $(".videoblock, .videoBox, .pcVideoListItem");
                 var videoItems = allVideoItems.filter(function () {
                     return !$(this).closest('#headerMenuContainer').length;
