@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.2",
+    version: "6.0.1",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -817,7 +817,6 @@ function getHotVideos(params) {
 
             // 构建基础URL
             var baseUrl = "https://cn.pornhub.com/video?o=ht&cc=" + params.cc + "&page=" + params.page;
-
             console.log("基础URL: " + baseUrl);
 
             // 请求热门视频页面
@@ -833,6 +832,9 @@ function getHotVideos(params) {
                     reject(new Error("获取热门视频失败"));
                     return;
                 }
+
+                // 打印响应数据的结构，确保数据包含视频项
+                console.log("响应数据: " + JSON.stringify(response.data));
 
                 // 假设响应是字典类型，包含一个`videos`字段
                 var data = response.data;
