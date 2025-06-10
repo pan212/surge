@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.1",
+    version: "6.0.2",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -55,19 +55,7 @@ WidgetMetadata = {
                         }
                     ]
                 }
-            ],
-            search: {
-                title: "本地筛选",
-                functionName: "search",
-                params: [
-                    {
-                        name: "keyword",
-                        title: "关键词",
-                        type: "input",
-                        description: "输入关键词本地筛选结果"
-                    }
-                ]
-            }
+            ]
         },
         {
             id: "searchUser",
@@ -84,37 +72,7 @@ WidgetMetadata = {
                         paramName: "sort_by",
                         value: ["default", "views", "rating"],
                     },
-                    enumOptions: [
-                        { 'title': 'HongKongDoll', 'value': 'HongKongDoll' },
-                        { 'title': '798DS', 'value': '798DS' },
-                        { 'title': 'aiwanxiongxiong', 'value': 'aiwanxiongxiong' },
-                        { 'title': 'andmlove', 'value': 'andmlove' },
-                        { 'title': 'ano ano chan', 'value': 'ano ano chan' },
-                        { 'title': 'bibi Fluffy', 'value': 'bibi Fluffy' },
-                        { 'title': 'CandyKissVip', 'value': 'CandyKissVip' },
-                        { 'title': 'Chinese Bunny', 'value': 'Chinese Bunny' },
-                        { 'title': 'DemiFairyTW', 'value': 'DemiFairyTW' },
-                        { 'title': 'Elle Lee', 'value': 'Elle Lee' },
-                        { 'title': 'Eve', 'value': 'Eve' },
-                        { 'title': 'fortunecutie', 'value': 'fortunecutie' },
-                        { 'title': 'LIs Evans', 'value': 'LIs Evans' },
-                        { 'title': 'loliiiiipop99', 'value': 'loliiiiipop99' },
-                        { 'title': 'Makissse', 'value': 'Makissse' },
-                        { 'title': 'nan12138', 'value': 'nan12138' },
-                        { 'title': 'Nana_taipei', 'value': 'Nana_taipei' },
-                        { 'title': 'Nuomibaby', 'value': 'Nuomibaby' },
-                        { 'title': 'papaxmama', 'value': 'papaxmama' },
-                        { 'title': 'Qiobnxingcaiii', 'value': 'Qiobnxingcaiii' },
-                        { 'title': 'SakuraCandy', 'value': 'SakuraCandy' },
-                        { 'title': 'sskok16', 'value': 'sskok16' },
-                        { 'title': 'SSR Peach', 'value': 'SSR Peach' },
-                        { 'title': 'thelittlejuicer', 'value': 'thelittlejuicer' },
-                        { 'title': 'TLMS_SVJ', 'value': 'TLMS_SVJ' },
-                        { 'title': 'twtutu', 'value': 'twtutu' },
-                        { 'title': 'Vita Won', 'value': 'Vita Won' },
-                        { 'title': 'Yuqiao Chen', 'value': 'Yuqiao Chen' },
-                        { 'title': 'YuzuKitty', 'value': 'YuzuKitty' }
-                    ]
+                    enumOptions: [{ 'title': 'HongKongDoll', 'value': 'HongKongDoll' }, { 'title': '798DS', 'value': '798DS' }, { 'title': 'aiwanxiongxiong', 'value': 'aiwanxiongxiong' }, { 'title': 'andmlove', 'value': 'andmlove' }, { 'title': 'ano ano chan', 'value': 'ano ano chan' }, { 'title': 'bibi Fluffy', 'value': 'bibi Fluffy' }, { 'title': 'CandyKissVip', 'value': 'CandyKissVip' }, { 'title': 'Chinese Bunny', 'value': 'Chinese Bunny' }, { 'title': 'DemiFairyTW', 'value': 'DemiFairyTW' }, { 'title': 'Elle Lee', 'value': 'Elle Lee' }, { 'title': 'Eve', 'value': 'Eve' }, { 'title': 'fortunecutie', 'value': 'fortunecutie' }, { 'title': 'LIs Evans', 'value': 'LIs Evans' }, { 'title': 'loliiiiipop99', 'value': 'loliiiiipop99' }, { 'title': 'Makissse', 'value': 'Makissse' }, { 'title': 'nan12138', 'value': 'nan12138' }, { 'title': 'Nana_taipei', 'value': 'Nana_taipei' }, { 'title': 'Nuomibaby', 'value': 'Nuomibaby' }, { 'title': 'papaxmama', 'value': 'papaxmama' }, { 'title': 'Qiobnxingcaiii', 'value': 'Qiobnxingcaiii' }, { 'title': 'SakuraCandy', 'value': 'SakuraCandy' }, { 'title': 'sskok16', 'value': 'sskok16' }, { 'title': 'SSR Peach', 'value': 'SSR Peach' }, { 'title': 'thelittlejuicer', 'value': 'thelittlejuicer' }, { 'title': 'TLMS_SVJ', 'value': 'TLMS_SVJ' }, { 'title': 'twtutu', 'value': 'twtutu' }, { 'title': 'Vita Won', 'value': 'Vita Won' }, { 'title': 'Yuqiao Chen', 'value': 'Yuqiao Chen' }, { 'title': 'YuzuKitty', 'value': 'YuzuKitty' }]
                 },
                 {
                     name: "sort_by",
@@ -144,19 +102,7 @@ WidgetMetadata = {
                     description: "艺人视频页码",
                     value: "1"
                 }
-            ],
-            search: {
-                title: "本地筛选",
-                functionName: "search",
-                params: [
-                    {
-                        name: "keyword",
-                        title: "关键词",
-                        type: "input",
-                        description: "输入关键词本地筛选结果"
-                    }
-                ]
-            }
+            ]
         },
         {
             id: "premiumArtists",
@@ -205,52 +151,9 @@ WidgetMetadata = {
                         }
                     ]
                 }
-            ],
-            search: {
-                title: "本地筛选",
-                functionName: "search",
-                params: [
-                    {
-                        name: "keyword",
-                        title: "关键词",
-                        type: "input",
-                        description: "输入关键词本地筛选结果"
-                    }
-                ]
-            }
+            ]
         }
-    ],
-    search: {
-        title: "全站关键词搜索",
-        functionName: "search",
-        params: [
-            {
-                name: "keyword",
-                title: "关键词",
-                type: "input",
-                description: "请输入要搜索的关键词"
-            },
-            {
-                name: "page",
-                title: "页码",
-                type: "page",
-                description: "搜索结果页码",
-                value: "1"
-            },
-            {
-                name: "sort_by",
-                title: "排序方式",
-                type: "enumeration",
-                description: "视频排序方式",
-                value: "default",
-                enumOptions: [
-                    { title: "最新发布", value: "default" },
-                    { title: "最多播放", value: "views" },
-                    { title: "最高评分", value: "rating" }
-                ]
-            }
-        ]
-    }
+    ]
 };
 
 // 通用工具函数 - 减少代码冗余
@@ -997,109 +900,71 @@ function getUserUploads(params) {
         }
     });
 }
-async function search(params = {}) {
-    try {
-        if (!params.keyword || !params.keyword.trim()) {
-            throw new Error("请输入要搜索的关键词");
-        }
-        const keyword = encodeURIComponent(params.keyword.trim());
-        const page = Math.max(1, Number(params.page) || 1);
-        const sortParam = getSortParam(params.sort_by);
-        let baseUrl = `https://cn.pornhub.com/video/search?search=${keyword}`;
-        if (sortParam) baseUrl += `&${sortParam}`;
-        if (page > 1) baseUrl += `&page=${page}`;
-        const response = await Widget.http.get(baseUrl, {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-                "Referer": "https://cn.pornhub.com/"
-            }
-        });
-        if (!response || !response.data) {
-            throw new Error("获取搜索结果失败，未获取到有效响应");
-        }
-        if (response.data.includes("As you may know, your elected officials") ||
-            response.data.includes("Trust and Safety measures")) {
-            throw new Error("无法访问Pornhub，可能存在地区限制");
-        }
-        const $ = Widget.html.load(response.data);
-        let videos = [];
-        let processedViewkeys = {};
-        let videoItems = $(".pcVideoListItem, .videoblock, .videoBox");
-        if (!videoItems.length) {
-            videoItems = $("[data-video-vkey], [data-id], a[href*='viewkey=']").closest("li, div.videoblock, div.videoBox");
-        }
-        if (!videoItems.length) {
-            throw new Error("未找到任何搜索结果，请更换关键词重试");
-        }
-        videoItems.each(function (idx, element) {
-            try {
-                let viewkey = extractViewkey($, element);
-                if (!viewkey || processedViewkeys[viewkey]) return;
-                let videoInfo = extractVideoInfo($, element, viewkey);
-                videos.push(videoInfo);
-                processedViewkeys[viewkey] = true;
-            } catch (err) {}
-        });
-        return videos;
-    } catch (error) {
-        throw error;
-    }
-}
 
-// 加载视频详情函数 - 由播放器系统管理缓存
+// 加载视频详情函数
 async function loadDetail(link) {
-    try {
-        console.log(`开始加载视频详情: ${link}`);
+    const response = await Widget.http.get(link, {
+        headers: {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        },
+    });
 
-        // 从link中提取viewkey
-        const viewkeyMatch = link.match(/viewkey=([^&]+)/);
-        if (!viewkeyMatch || !viewkeyMatch[1]) {
-            console.log(`错误: 无效的视频链接 ${link}`);
-            throw new Error("无效的视频链接");
+    // 获取页面HTML内容
+    const htmlContent = response.data;
+    const $ = Widget.html.load(htmlContent);
+
+    // 获取视频的推荐区块
+    const recommendedVideos = [];
+    const recommendedItems = $(".videos.underplayer-thumbs.fixedSizeThumbsVideosListing .video-box"); // 推荐视频区域的选择器
+
+    recommendedItems.each((i, element) => {
+        const $item = $(element);
+        const viewkey = $item.data("video-vkey"); // 获取推荐视频的viewkey
+        const title = $item.find(".title").text(); // 获取推荐视频的标题
+        const thumbnail = $item.find("img").attr("src"); // 获取推荐视频的封面图
+
+        // 构建推荐视频对象
+        if (viewkey) {
+            recommendedVideos.push({
+                id: viewkey,
+                type: "link",
+                title: title,
+                coverUrl: thumbnail,
+                link: "/view_video.php?viewkey=" + viewkey
+            });
         }
+    });
 
-        const viewkey = viewkeyMatch[1];
-
-        // 获取m3u8链接，不做缓存处理，由播放器系统管理
-        const m3u8Data = await getVideoM3u8Link(viewkey);
-
-        if (!m3u8Data || !m3u8Data.videoUrl) {
-            console.log(`错误: 无法获取视频播放链接`);
-            throw new Error("无法获取视频播放链接");
-        }
-
-        // 构建完整的视频URL
-        const fullVideoUrl = `https://cn.pornhub.com/view_video.php?viewkey=${viewkey}`;
-
-        // 返回Forward兼容的详情对象
-        const result = {
-            id: viewkey,
-            type: "detail", // 必须是detail类型
-            videoUrl: m3u8Data.videoUrl,
-            customHeaders: {
-                "Referer": fullVideoUrl,
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            },
-            quality: m3u8Data.quality,
-            title: "视频播放",
-            duration: 0,
-            formats: m3u8Data.formats
-        };
-
-        console.log(`视频详情加载成功: ${JSON.stringify({ id: result.id, quality: result.quality, source: m3u8Data.source })}`);
-        return result;
-    } catch (error) {
-        console.log(`loadDetail执行失败: ${error.message}`);
-        throw error;
+    // 获取当前视频的HLS流链接
+    const hlsUrl = response.data.match(/var hlsUrl = '(.*?)';/)[1];
+    if (!hlsUrl) {
+        throw new Error("无法获取有效的HLS URL");
     }
+
+    // 构建当前视频的详情对象
+    const item = {
+        id: link,
+        type: "detail",
+        videoUrl: hlsUrl,
+        customHeaders: {
+            "Referer": link,
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        },
+    };
+
+    // 如果有推荐视频，则将推荐视频作为 childItems 返回
+    if (recommendedVideos.length > 0) {
+        item.childItems = recommendedVideos;
+    }
+
+    return item;
 }
+
 
 // 导出模块
 module.exports = {
     metadata: WidgetMetadata,
     getFavorites: getFavorites,
     getUserUploads: getUserUploads,
-    search: search,
     loadDetail: loadDetail
 };
