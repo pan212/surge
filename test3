@@ -12,7 +12,7 @@ WidgetMetadata = {
             id: "favorites",
             title: "我的最爱",
             functionName: "getFavorites",
-            cacheDuration: 120,
+            cacheDuration: 180,
             params: [
                 {
                     name: "username",
@@ -61,7 +61,7 @@ WidgetMetadata = {
             id: "searchUser",
             title: "优选艺人",
             functionName: "getUserUploads",
-            cacheDuration: 120,
+            cacheDuration: 300,
             params: [
                 {
                     name: "username",
@@ -157,7 +157,7 @@ WidgetMetadata = {
             id: "hotVideos",
             title: "热播视频",
             functionName: "getVideos",
-            cacheDuration: 120,
+            cacheDuration: 600,
             params: [
                 {
                     name: "pageType",
@@ -230,7 +230,7 @@ WidgetMetadata = {
             id: "topViews",
             title: "最多观看",
             functionName: "getVideos",
-            cacheDuration: 120,
+            cacheDuration: 600,
             params: [
                 {
                     name: "pageType",
