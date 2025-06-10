@@ -163,6 +163,7 @@ WidgetMetadata = {
                     name: "cc",  // 国家选择
                     title: "国家/地区",
                     type: "enumeration",
+                    description: "热门视频称",
                     enumOptions: [
                         { title: "全世界", value: "world" },
                         { title: "美国", value: "us" },
