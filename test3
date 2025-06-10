@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.5",
+    version: "6.0.1",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -576,11 +576,8 @@ function getSortParam(sort_by) {
 }
 
 async function getHotVideos(params = {}) {
-    const cc = params.country || "world";  // 默认使用 'world'，如果传递了 'country' 参数，则使用它
+    const cc = params.cc || "world";  // 默认全世界
     const page = params.page || 1;  // 默认第一页
-
-    // 打印检查传入的参数
-    console.log(`请求的国家/地区: ${cc}, 页码: ${page}`);
 
     // 构建URL，cc=world表示全世界，其他则按国家代码来
     const url = `https://cn.pornhub.com/video?o=ht&cc=${cc}&page=${page}`;
@@ -657,7 +654,6 @@ async function getHotVideos(params = {}) {
         throw new Error("获取热门视频失败: " + error.message);  // 返回异常错误
     }
 }
-
 
 // 获取用户上传的视频
 function getUserUploads(params) {
@@ -802,14 +798,16 @@ function getUserUploads(params) {
 
 // 获取热门视频列表
 async function getHotVideos(params = {}) {
-    console.log("传递的参数:", params);  // 打印传递的参数
-    const cc = params.cc || "world";  // 默认全世界
+    const cc = params.country || "world";  // 如果没有传递country参数，默认使用 "world"
     const page = params.page || 1;  // 默认第一页
 
-    // 构建URL，cc=world表示全世界，其他则按国家代码来
+    // 打印检查传入的参数，确保country传递正确
+    console.log("传递的参数:", params);
+
+    // 构建请求 URL，cc=world表示全世界，其他则按国家代码来
     const url = `https://cn.pornhub.com/video?o=ht&cc=${cc}&page=${page}`;
-    
-    // 打印请求的URL和参数，确保请求是正确的
+
+    // 打印构建的 URL
     console.log(`请求热门视频 URL: ${url}`);
 
     try {
