@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.2",
+    version: "6.0.5",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -156,22 +156,20 @@ WidgetMetadata = {
         {
             id: "hotVideos",  // 热门视频模块
             title: "热门视频",
-            functionName: "getHotVideos",  // 获取热门视频功能
-            cacheDuration: 1800,  // 缓存30分钟
+            functionName: "getHotVideos",
+            cacheDuration: 120,
             params: [
                 {
-                    name: "cc",  // 国家选择
-                    title: "国家/地区",
+                    name: "cc",
+                    title: "热门视频",
                     type: "enumeration",
-                    description: "热门视频称",
+                    description: "选择显示热门视频的国家",
                     enumOptions: [
-                        { title: "全世界", value: "world" },
-                        { title: "美国", value: "us" },
-                        { title: "日本", value: "jp" },
-                        { title: "韩国", value: "kr" },
-                        { title: "英国", value: "gb" },
-                        { title: "法国", value: "fr" },
-                        { title: "德国", value: "de" }
+                        { title: "全球", value: "world" },
+                        { title: "美国", value: "US" },
+                        { title: "日本", value: "JP" },
+                        { title: "韩国", value: "KR" },
+                        // 可以继续添加其他国家
                     ],
                     value: "world"
                 },
@@ -184,6 +182,7 @@ WidgetMetadata = {
                 }
             ]
         }
+
     ]
 };
 
@@ -805,71 +804,94 @@ function getUserUploads(params) {
     });
 }
 
-async function getHotVideos(params = {}) {
-    const cc = params.cc || "world";  // 默认全世界
-    const page = params.page || 1;  // 默认第一页
-
-    // 构建URL，cc=world表示全世界，其他则按国家代码来
-    const url = `https://cn.pornhub.com/video?o=ht&cc=${cc}&page=${page}`;
-
-    try {
-        // 获取页面HTML内容
-        const response = await Widget.http.get(url, {
-            headers: {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
-            }
-        });
-
-        const htmlContent = response.data;
-        console.log("响应数据:", htmlContent);  // 打印原始 HTML 内容
-
-        const $ = Widget.html.load(htmlContent);
-
-        // 解析视频项
-        const items = [];
-        $("ul.videos.search-video-thumbs > li").each(function () {
-            const $item = $(this);
-            const vkey = extractViewkey($, $item); // 获取视频viewkey
-            if (!vkey) return;  // 如果没有viewkey则跳过
-
-            // 获取视频标题、链接
-            const title = $item.find(".title a").attr("title") || $item.find(".title").text().trim();
-            let link = $item.find(".title a").attr("href") || "";
-            if (link && !/^https?:\/\//.test(link)) {
-                link = "https://cn.pornhub.com" + link;  // 补全链接
+function getHotVideos(params) {
+    return new Promise(function (resolve, reject) {
+        try {
+            console.log("开始获取热门视频: " + JSON.stringify(params));
+            // 参数验证
+            if (!params.cc) {
+                console.log("错误: 未提供国家代码");
+                reject(new Error("请提供国家代码"));
+                return;
             }
 
-            // 获取封面图
-            const img = $item.find("img");
-            const coverUrl = img.attr("src") || img.attr("data-thumb") || img.attr("data-src") || "";
-            const previewUrl = img.attr("data-mediabook") || img.attr("data-preview") || img.attr("data-webm") || "";
+            // 构建基础URL
+            var baseUrl = "https://cn.pornhub.com/video?o=ht&cc=" + params.cc + "&page=" + params.page;
 
-            // 获取视频时长
-            const durationText = $item.find(".duration, .videoDuration").text().trim();
+            console.log("基础URL: " + baseUrl);
 
-            // 将视频项推送到items数组
-            items.push({
-                id: vkey,
-                type: "link",
-                title: title,
-                coverUrl: coverUrl,
-                previewUrl: previewUrl,
-                durationText: durationText,
-                link: link
+            // 请求热门视频页面
+            Widget.http.get(baseUrl, {
+                headers: {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                    "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+                    "Referer": "https://cn.pornhub.com/"
+                }
+            }).then(function (response) {
+                if (!response || !response.data) {
+                    console.log("错误: 获取热门视频失败，无响应或响应无数据");
+                    reject(new Error("获取热门视频失败"));
+                    return;
+                }
+
+                // 解析HTML
+                var $ = Widget.html.load(response.data);
+
+                // 提取视频列表
+                var videos = [];
+                var processedViewkeys = {}; // 用于去重
+
+                var videoItems = $(".pcVideoListItem, .videoBox, .videoblock");
+                console.log("找到 " + videoItems.length + " 个视频项");
+
+                // 如果找不到任何视频项
+                if (videoItems.length === 0) {
+                    reject(new Error("未找到任何热门视频项"));
+                    return;
+                }
+
+                // 处理每个视频项
+                videoItems.each(function (index, element) {
+                    try {
+                        // 提取viewkey
+                        var viewkey = extractViewkey($, element);
+                        if (!viewkey) {
+                            return; // 跳过无效项
+                        }
+
+                        // 检查是否已处理过该viewkey，避免重复添加
+                        if (processedViewkeys[viewkey]) {
+                            return;
+                        }
+
+                        // 提取视频信息
+                        var videoInfo = extractVideoInfo($, element, viewkey);
+
+                        // 添加到结果数组
+                        videos.push(videoInfo);
+
+                        // 添加到已处理集合
+                        processedViewkeys[viewkey] = true;
+
+                    } catch (error) {
+                        console.log("处理视频项时出错: " + error.message);
+                    }
+                });
+
+                console.log("成功提取 " + videos.length + " 个热门视频");
+
+                resolve(videos);
+            }).catch(function (error) {
+                console.log("获取热门视频失败: " + error.message);
+                reject(error);
             });
-        });
-
-        console.log("提取的视频项:", items);  // 打印提取到的视频数据
-
-        // 返回视频列表（数组格式）
-        return items;  // 返回items数组，符合ForwardWidget期望格式
-
-    } catch (error) {
-        console.error("获取热门视频失败: ", error.message);  // 错误信息打印
-        throw new Error("获取热门视频失败: " + error.message);  // 返回异常错误
-    }
+        } catch (error) {
+            console.log("获取热门视频失败: " + error.message);
+            reject(error);
+        }
+    });
 }
+
 
 
 // 加载视频详情函数
