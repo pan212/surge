@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.1.0",
+    version: "6.1.7",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -240,7 +240,7 @@ WidgetMetadata = {
                     type: "constant"
                 },
                 {
-                    name: "timeRange",
+                    name: "sort_by",
                     title: "时间范围",
                     type: "enumeration",
                     description: "选择统计时间范围",
@@ -860,7 +860,7 @@ async function getVideos(originalParams = {}) {
     const page = params.page || 1;  // 默认第一页
 
     const pageType = params.pageType // 新增参数: "ht" 表示热门，"mv" 表示最多观看
-    const timeRange = params.timeRange; // 新增参数: t 表示时间范围
+    const sort_by = params.sort_by; // 新增参数: t 表示时间范围
 
     console.log("传递的参数:", params);
 
@@ -868,12 +868,12 @@ async function getVideos(originalParams = {}) {
     let url = `https://cn.pornhub.com/video?o=${pageType}&cc=${cc}&page=${page}`;
 
     // 如果是最多观看功能，并且提供了时间范围，则添加时间范围参数
-    if (pageType === "mv" && timeRange) {
-        url += `&t=${timeRange}`;
+    if (pageType === "mv" && sort_by) {
+        url += `&t=${sort_by}`;
     }
 
     // 打印构建的 URL
-    console.log(`请求热门视频 URL: ${url}`);
+    console.log(`请求视频 URL: ${url}`);
 
     try {
         // 获取页面HTML内容
@@ -883,8 +883,6 @@ async function getVideos(originalParams = {}) {
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
             }
         });
-
-        console.log("网络请求成功，响应状态：", response.status);  // 打印响应状态，确保请求成功
 
         const htmlContent = response.data;
         console.log("返回的HTML内容：", htmlContent);  // 打印返回的HTML内容，检查是否包含视频数据
