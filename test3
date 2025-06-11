@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.1.2",
+    version: "6.1.3",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -302,6 +302,60 @@ WidgetMetadata = {
                         { title: "瑞典", value: "se" },
                         { title: "瑞士", value: "ch" },
                         { title: "乌克兰", value: "ua" }
+                    ]
+                },
+                {
+                    name: "page",
+                    title: "页码",
+                    type: "page",
+                    description: "热门视频页码",
+                    value: "1"
+                }
+            ]
+        },
+        // https://cn.pornhub.com/video?c=1&o=tr
+        // https://cn.pornhub.com/categories/teen?o=tr
+        {
+            id: "maxRating",
+            title: "最高评分",
+            functionName: "getVideos",
+            cacheDuration: 600,
+            params: [
+                {
+                    name: "pageType",
+                    title: "区分页面类型",
+                    description: "区分页面类型",
+                    value: "tr",
+                    type: "constant"
+                },
+                {
+                    name: "pageType2",
+                    title: "分类",
+                    description: "分类",
+                    value: "",
+                    enumOptions: [
+                        { title: "全部", value: "" },
+                        { title: "18-25岁", value: "teen" },
+                        { title: "亚洲人", value: "1" },
+                        { title: "60帧", value: "105" },
+                        { title: "Cosplay", value: "241" },
+                        { title: "亚洲人", value: "1" },
+                        { title: "校园", value: "88" },
+                        { title: "法国人", value: "94" }
+                    ]
+                },
+                {
+                    name: "sort_by",
+                    title: "时间范围",
+                    type: "enumeration",
+                    description: "选择统计时间范围",
+                    value: "", // 默认值为空，对应每周统计
+                    enumOptions: [
+                        { title: "每周", value: "" },
+                        { title: "每天", value: "t" },
+                        { title: "每月", value: "m" },
+                        { title: "每年", value: "y" },
+                        { title: "迄今为止", value: "a" }
                     ]
                 },
                 {
@@ -935,24 +989,54 @@ function getUserUploads(params) {
     });
 }
 
-// 获取热门视频列表
+// 获取视频列表
 async function getVideos(originalParams = {}) {
     // 创建 params 的可写副本，以避免修改只读属性的错误
     const params = { ...originalParams };
     const cc = params.country;
     const page = params.page || 1;  // 默认第一页
 
-    const pageType = params.pageType // 新增参数: "ht" 表示热门，"mv" 表示最多观看
-    const sort_by = params.sort_by; // 新增参数: t 表示时间范围
+    const pageType = params.pageType // 新增参数: "ht" 表示热门，"mv" 表示最多观看,"tr"表示最高分
+    const sort_by = params.sort_by; // 新增参数: t 表示时间范围（热门、最高分）
+    const c = params.pageType2;
 
     console.log("传递的参数:", params);
 
-    // 构建请求 URL，根据 pageType 参数决定排序方式
-    let url = `https://cn.pornhub.com/video?o=${pageType}&cc=${cc}&page=${page}`;
+    let url = "https://cn.pornhub.com/video?"; // 默认基础URL
 
-    // 如果是最多观看功能，并且提供了时间范围，则添加时间范围参数
-    if (pageType === "mv" && sort_by) {
-        url += `&t=${sort_by}`;
+    if (pageType === "tr") {
+        // 最高评分模块
+        if (pageType2) {
+            // 检查 pageType2 是否为数字，如果是则使用 c 参数，否则作为路径一部分
+            if (!isNaN(pageType2) && pageType2 !== "") { // 确保 pageType2 是有效的数字字符串
+                url = `https://cn.pornhub.com/video?o=tr&c=${pageType2}`;
+            } else {
+                url = `https://cn.pornhub.com/categories/${pageType2}?o=tr`;
+            }
+        } else {
+            url = `https://cn.pornhub.com/video?o=tr`;
+        }
+
+        if (sortBy) {
+            url += `&t=${sortBy}`;
+        }
+    } else if (orderBy) {
+        // 热门或最多观看模块
+        url += `o=${orderBy}`;
+        if (orderBy === "mv" && timeRange) {
+            url += `&t=${timeRange}`;
+        }
+    } else {
+        // 默认情况，例如没有指定 orderBy 或 pageType
+        url += `o=ht`; // 默认热门
+    }
+
+    // 只有当 URL 不包含 categories 路径时才添加 &cc 和 &page
+    if (!url.includes("/categories/")) {
+        url += `&cc=${cc}&page=${page}`;
+    } else {
+        // 如果是 categories 路径，则 cc 和 page 需要作为查询参数添加
+        url += `&cc=${cc}&page=${page}`;
     }
 
     // 打印构建的 URL
@@ -968,14 +1052,9 @@ async function getVideos(originalParams = {}) {
         });
 
         const htmlContent = response.data;
-        console.log("返回的HTML内容：", htmlContent);  // 打印返回的HTML内容，检查是否包含视频数据
 
         // 使用 Widget.html.load 解析 HTML
         const $ = Widget.html.load(htmlContent);
-        if (!$) {
-            console.log("解析HTML失败，无法加载 Widget.html.load");
-            throw new Error("无法加载HTML内容，请检查Widget.html.load是否正确配置");
-        }
 
         // 解析视频项
         const items = [];
