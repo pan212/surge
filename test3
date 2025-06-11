@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.1.3",
+    version: "6.0.3",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -1015,8 +1015,8 @@ async function getVideos(originalParams = {}) {
             url = `https://cn.pornhub.com/video?o=tr`;
         }
 
-        if (sort_By) {
-            url += `&t=${sort_By}`;
+        if (sort_by) {
+            url += `&t=${sort_by}`;
         }
     } else if (pageType) {
         // 热门或最多观看模块
