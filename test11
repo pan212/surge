@@ -312,6 +312,42 @@ WidgetMetadata = {
                     value: "1"
                 }
             ]
+        },
+        {
+            id: "maxRating",
+            title: "最高评分",
+            functionName: "getVideos", // 使用相同的getVideos函数
+            cacheDuration: 600,
+            params: [
+                {
+                    name: "pageType",
+                    title: "区分页面类型",
+                    description: "区分页面类型",
+                    value: "tr", // 对应最高评分页面
+                    type: "constant"
+                },
+                {
+                    name: "sort_by",
+                    title: "时间范围",
+                    type: "enumeration",
+                    description: "选择统计时间范围",
+                    value: "", // 默认值为空，对应每周统计
+                    enumOptions: [
+                        { title: "每周", value: "" },
+                        { title: "每天", value: "t" },
+                        { title: "每月", value: "m" },
+                        { title: "每年", value: "y" },
+                        { title: "迄今为止", value: "a" }
+                    ]
+                },
+                {
+                    name: "page",
+                    title: "页码",
+                    type: "page",
+                    description: "最高评分视频页码",
+                    value: "1"
+                }
+            ]
         }
 
     ]
@@ -935,14 +971,14 @@ function getUserUploads(params) {
     });
 }
 
-// 获取热门视频列表
+// 获取视频列表
 async function getVideos(originalParams = {}) {
     // 创建 params 的可写副本，以避免修改只读属性的错误
     const params = { ...originalParams };
     const cc = params.country;
     const page = params.page || 1;  // 默认第一页
 
-    const pageType = params.pageType // 新增参数: "ht" 表示热门，"mv" 表示最多观看
+    const pageType = params.pageType // 新增参数: "ht" 表示热门，"mv" 表示最多观看，"tr" 表示最高评分
     const sort_by = params.sort_by; // 新增参数: t 表示时间范围
 
     console.log("传递的参数:", params);
@@ -950,8 +986,8 @@ async function getVideos(originalParams = {}) {
     // 构建请求 URL，根据 pageType 参数决定排序方式
     let url = `https://cn.pornhub.com/video?o=${pageType}&cc=${cc}&page=${page}`;
 
-    // 如果是最多观看功能，并且提供了时间范围，则添加时间范围参数
-    if (pageType === "mv" && sort_by) {
+    // 如果是最高评分功能，并且提供了时间范围，则添加时间范围参数
+    if (pageType === "tr" && sort_by) {
         url += `&t=${sort_by}`;
     }
 
@@ -1025,6 +1061,7 @@ async function getVideos(originalParams = {}) {
         throw new Error("获取热门视频失败: " + error.message);  // 返回异常错误
     }
 }
+
 
 // 加载视频详情函数
 async function loadDetail(link) {
