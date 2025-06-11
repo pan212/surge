@@ -31,7 +31,7 @@ WidgetMetadata = {
                     name: "page",
                     title: "页码",
                     type: "page",
-                    description: "收藏列表页码",
+                    description: "页码",
                     value: "1"
                 },
                 {
@@ -99,7 +99,7 @@ WidgetMetadata = {
                     name: "page",
                     title: "页码",
                     type: "page",
-                    description: "艺人视频页码",
+                    description: "页码",
                     value: "1"
                 }
             ]
@@ -160,13 +160,6 @@ WidgetMetadata = {
             cacheDuration: 600,
             params: [
                 {
-                    name: "pageType",
-                    title: "区分页面类型",
-                    description: "区分页面类型",
-                    value: "ht",
-                    type: "constant"
-                },
-                {
                     name: "country",
                     title: "国家/地区",
                     type: "enumeration",
@@ -218,10 +211,17 @@ WidgetMetadata = {
                     ]
                 },
                 {
+                    name: "pageType",
+                    title: "区分页面类型",
+                    description: "区分页面类型",
+                    value: "ht",
+                    type: "constant"
+                },
+                {
                     name: "page",
                     title: "页码",
                     type: "page",
-                    description: "热门视频页码",
+                    description: "页码",
                     value: "1"
                 }
             ]
@@ -232,13 +232,6 @@ WidgetMetadata = {
             functionName: "getVideos",
             cacheDuration: 600,
             params: [
-                {
-                    name: "pageType",
-                    title: "区分页面类型",
-                    description: "区分页面类型",
-                    value: "mv",
-                    type: "constant"
-                },
                 {
                     name: "sort_by",
                     title: "时间范围",
@@ -305,16 +298,21 @@ WidgetMetadata = {
                     ]
                 },
                 {
+                    name: "pageType",
+                    title: "区分页面类型",
+                    description: "区分页面类型",
+                    value: "mv",
+                    type: "constant"
+                },
+                {
                     name: "page",
                     title: "页码",
                     type: "page",
-                    description: "热门视频页码",
+                    description: "页码",
                     value: "1"
                 }
             ]
         },
-        // https://cn.pornhub.com/video?c=1&o=tr
-        // https://cn.pornhub.com/categories/teen?o=tr
         {
             id: "maxRating",
             title: "最高评分",
@@ -362,7 +360,7 @@ WidgetMetadata = {
                     name: "page",
                     title: "页码",
                     type: "page",
-                    description: "热门视频页码",
+                    description: "视频页码",
                     value: "1"
                 }
             ]
@@ -1020,23 +1018,23 @@ async function getVideos(originalParams = {}) {
         if (sortBy) {
             url += `&t=${sortBy}`;
         }
-    } else if (orderBy) {
+    } else if (pageType) {
         // 热门或最多观看模块
-        url += `o=${orderBy}`;
-        if (orderBy === "mv" && timeRange) {
-            url += `&t=${timeRange}`;
+        url += `o=${pageType}`;
+        if (pageType === "mv" && sort_by) {
+            url += `&t=${sort_by}`;
         }
     } else {
-        // 默认情况，例如没有指定 orderBy 或 pageType
+        // 默认情况，例如没有指定  pageType
         url += `o=ht`; // 默认热门
     }
 
-    // 只有当 URL 不包含 categories 路径时才添加 &cc 和 &page
+    // 只有当 URL 不包含 categories 路径时才添加 &cc
     if (!url.includes("/categories/")) {
-        url += `&cc=${cc}&page=${page}`;
+        url += `&cc=${cc}`;
     } else {
-        // 如果是 categories 路径，则 cc 和 page 需要作为查询参数添加
-        url += `&cc=${cc}&page=${page}`;
+        // 如果是 categories 路径，则只加 page 
+        url += `&page=${page}`;
     }
 
     // 打印构建的 URL
