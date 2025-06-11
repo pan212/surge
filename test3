@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.0.3",
+    version: "6.1.2",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -31,7 +31,7 @@ WidgetMetadata = {
                     name: "page",
                     title: "页码",
                     type: "page",
-                    description: "页码",
+                    description: "收藏列表页码",
                     value: "1"
                 },
                 {
@@ -99,7 +99,7 @@ WidgetMetadata = {
                     name: "page",
                     title: "页码",
                     type: "page",
-                    description: "页码",
+                    description: "艺人视频页码",
                     value: "1"
                 }
             ]
@@ -160,6 +160,13 @@ WidgetMetadata = {
             cacheDuration: 600,
             params: [
                 {
+                    name: "pageType",
+                    title: "区分页面类型",
+                    description: "区分页面类型",
+                    value: "ht",
+                    type: "constant"
+                },
+                {
                     name: "country",
                     title: "国家/地区",
                     type: "enumeration",
@@ -211,17 +218,10 @@ WidgetMetadata = {
                     ]
                 },
                 {
-                    name: "pageType",
-                    title: "区分页面类型",
-                    description: "区分页面类型",
-                    value: "ht",
-                    type: "constant"
-                },
-                {
                     name: "page",
                     title: "页码",
                     type: "page",
-                    description: "页码",
+                    description: "热门视频页码",
                     value: "1"
                 }
             ]
@@ -232,6 +232,13 @@ WidgetMetadata = {
             functionName: "getVideos",
             cacheDuration: 600,
             params: [
+                {
+                    name: "pageType",
+                    title: "区分页面类型",
+                    description: "区分页面类型",
+                    value: "mv",
+                    type: "constant"
+                },
                 {
                     name: "sort_by",
                     title: "时间范围",
@@ -298,17 +305,10 @@ WidgetMetadata = {
                     ]
                 },
                 {
-                    name: "pageType",
-                    title: "区分页面类型",
-                    description: "区分页面类型",
-                    value: "mv",
-                    type: "constant"
-                },
-                {
                     name: "page",
                     title: "页码",
                     type: "page",
-                    description: "页码",
+                    description: "热门视频页码",
                     value: "1"
                 }
             ]
@@ -365,7 +365,6 @@ WidgetMetadata = {
                 }
             ]
         }
-
     ]
 };
 
@@ -993,50 +992,55 @@ async function getVideos(originalParams = {}) {
     const params = { ...originalParams };
     const cc = params.country;
     const page = params.page || 1;  // 默认第一页
-
-    const pageType = params.pageType // 新增参数: "ht" 表示热门，"mv" 表示最多观看,"tr"表示最高分
-    const sort_by = params.sort_by; // 新增参数: t 表示时间范围（热门、最高分）
-    const c = params.pageType2;
+  
+    const pageType = params.pageType; // "ht" (热门), "mv" (最多观看), "tr" (最高评分)
+    const sort_by = params.sort_by; // 时间范围参数 (t, m, y, a)
+    const c = params.pageType2; // 分类 ID 或 slug
 
     console.log("传递的参数:", params);
 
-    let url = "https://cn.pornhub.com/video?"; // 默认基础URL
+    let baseUrl = "https://cn.pornhub.com";
+    let path = "/video";
+    let queryParams = [];
 
     if (pageType === "tr") {
         // 最高评分模块
-        if (pageType2) {
-            // 检查 pageType2 是否为数字，如果是则使用 c 参数，否则作为路径一部分
-            if (!isNaN(pageType2) && pageType2 !== "") { // 确保 pageType2 是有效的数字字符串
-                url = `https://cn.pornhub.com/video?o=tr&c=${pageType2}`;
+        if (c) {
+            // 检查 c 是否为数字，如果是则使用 c 参数，否则作为路径一部分
+            if (!isNaN(c) && c !== "") {
+                path = "/video";
+                queryParams.push(`o=tr`);
+                queryParams.push(`c=${c}`);
             } else {
-                url = `https://cn.pornhub.com/categories/${pageType2}?o=tr`;
+                path = `/categories/${c}`;
+                queryParams.push(`o=tr`);
             }
         } else {
-            url = `https://cn.pornhub.com/video?o=tr`;
+            path = "/video";
+            queryParams.push(`o=tr`);
         }
 
         if (sort_by) {
-            url += `&t=${sort_by}`;
+            queryParams.push(`t=${sort_by}`);
         }
     } else if (pageType) {
         // 热门或最多观看模块
-        url += `o=${pageType}`;
+        path = "/video";
+        queryParams.push(`o=${pageType}`);
         if (pageType === "mv" && sort_by) {
-            url += `&t=${sort_by}`;
+            queryParams.push(`t=${sort_by}`);
         }
     } else {
-        // 默认情况，例如没有指定  pageType
-        url += `o=ht`; // 默认热门
+        // 默认情况，例如没有指定 pageType
+        path = "/video";
+        queryParams.push(`o=ht`); // 默认热门
     }
 
-    // 只有当 URL 不包含 categories 路径时才添加 &cc
-    if (!url.includes("/categories/")) {
-        url += `&cc=${cc}`;
-    } else {
-        // 如果是 categories 路径，则只加 page 
-        url += `&page=${page}`;
-    }
+    // 添加国家和页码参数
+    queryParams.push(`cc=${cc}`);
+    queryParams.push(`page=${page}`);
 
+    const url = `${baseUrl}${path}?${queryParams.join('&')}`;
     // 打印构建的 URL
     console.log(`请求视频 URL: ${url}`);
 
@@ -1102,7 +1106,6 @@ async function getVideos(originalParams = {}) {
         throw new Error("获取热门视频失败: " + error.message);  // 返回异常错误
     }
 }
-
 // 加载视频详情函数
 async function loadDetail(link) {
     try {
