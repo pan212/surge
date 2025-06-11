@@ -975,20 +975,25 @@ function getUserUploads(params) {
 async function getVideos(originalParams = {}) {
     // 创建 params 的可写副本，以避免修改只读属性的错误
     const params = { ...originalParams };
-    const cc = params.country;
     const page = params.page || 1;  // 默认第一页
 
     const pageType = params.pageType // "ht" 表示热门，"mv" 表示最多观看，"tr" 表示最高评分
     const sort_by = params.sort_by; // 时间范围，如 "t" 表示每天, "m" 表示每月等
+    const cc = params.country; // 国家/地区参数
 
     console.log("传递的参数:", params);
 
     // 构建请求 URL，根据 pageType 参数决定排序方式
-    let url = `https://cn.pornhub.com/video?o=${pageType}&cc=${cc}&page=${page}`;
+    let url = `https://cn.pornhub.com/video?o=${pageType}&page=${page}`;
 
     // 如果是最高评分页面并且提供了时间范围，则添加时间范围参数
-    if ((pageType === "tr" || pageType === "mv") && sort_by) {
+    if (pageType === "tr" && sort_by) {
         url += `&t=${sort_by}`;
+    }
+
+    // 如果是最多观看页面，并且提供了国家参数，则添加国家参数
+    if (pageType === "mv" && cc) {
+        url += `&cc=${cc}`;
     }
 
     // 打印构建的 URL
