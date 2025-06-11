@@ -1,7 +1,7 @@
 WidgetMetadata = {
     id: "Pornhub",
     title: "Pornhub",
-    version: "6.1.6",
+    version: "6.1.2",
     requiredVersion: "0.0.1",
     description: "在线观看Pornhub",
     author: "海带",
@@ -312,59 +312,8 @@ WidgetMetadata = {
                     value: "1"
                 }
             ]
-        },
-        {
-            id: "maxRating",
-            title: "最高评分",
-            functionName: "getVideos",
-            cacheDuration: 600,
-            params: [
-                {
-                    name: "pageType",
-                    title: "区分页面类型",
-                    description: "区分页面类型",
-                    value: "tr",
-                    type: "constant"
-                },
-                {
-                    name: "pageType2",
-                    title: "分类",
-                    description: "分类",
-                    value: "",
-                    enumOptions: [
-                        { title: "全部", value: "" },
-                        { title: "18-25岁", value: "teen" },
-                        { title: "亚洲人", value: "1" },
-                        { title: "60帧", value: "105" },
-                        { title: "Cosplay", value: "241" },
-                        { title: "亚洲人", value: "1" },
-                        { title: "校园", value: "88" },
-                        { title: "法国人", value: "94" }
-                    ]
-                },
-                {
-                    name: "sort_by",
-                    title: "时间范围",
-                    type: "enumeration",
-                    description: "选择统计时间范围",
-                    value: "", // 默认值为空，对应每周统计
-                    enumOptions: [
-                        { title: "每周", value: "" },
-                        { title: "每天", value: "t" },
-                        { title: "每月", value: "m" },
-                        { title: "每年", value: "y" },
-                        { title: "迄今为止", value: "a" }
-                    ]
-                },
-                {
-                    name: "page",
-                    title: "页码",
-                    type: "page",
-                    description: "视频页码",
-                    value: "1"
-                }
-            ]
         }
+
     ]
 };
 
@@ -986,50 +935,27 @@ function getUserUploads(params) {
     });
 }
 
-// 获取视频列表
+// 获取热门视频列表
 async function getVideos(originalParams = {}) {
     // 创建 params 的可写副本，以避免修改只读属性的错误
     const params = { ...originalParams };
-    const cc = params.country || "world";  // 如果没有传递country参数，默认使用 "world"
+    const cc = params.country;
     const page = params.page || 1;  // 默认第一页
 
-    const pageType = params.pageType || "ht"; // 默认热门页面
-    const sort_by = params.sort_by || ""; // 默认排序方式为空
-    const c = params.pageType2 || ""; // 分类 ID 或 slug
+    const pageType = params.pageType // 新增参数: "ht" 表示热门，"mv" 表示最多观看
+    const sort_by = params.sort_by; // 新增参数: t 表示时间范围
 
     console.log("传递的参数:", params);
 
-    let baseUrl = "https://cn.pornhub.com";
-    let path = "/video";
-    let queryParams = [];
+    // 构建请求 URL，根据 pageType 参数决定排序方式
+    let url = `https://cn.pornhub.com/video?o=${pageType}&cc=${cc}&page=${page}`;
 
-    // 构建 URL 根据不同的页面类型
-    if (pageType === "tr") {
-        // 如果是最高评分（Top Rated）
-        if (c) {
-            queryParams.push(`o=tr`);
-            queryParams.push(`c=${c}`);
-        } else {
-            queryParams.push(`o=tr`);
-        }
-    } else if (pageType === "mv") {
-        // 如果是最多观看（Most Viewed）
-        queryParams.push(`o=mv`);
-    } else {
-        // 默认热门（Hot）
-        queryParams.push(`o=ht`);
+    // 如果是最多观看功能，并且提供了时间范围，则添加时间范围参数
+    if (pageType === "mv" && sort_by) {
+        url += `&t=${sort_by}`;
     }
 
-    // 根据页面类型添加其他参数
-    if (sort_by) {
-        queryParams.push(`t=${sort_by}`);
-    }
-
-    // 添加国家和页码参数
-    queryParams.push(`cc=${cc}`);
-    queryParams.push(`page=${page}`);
-
-    const url = `${baseUrl}${path}?${queryParams.join('&')}`;
+    // 打印构建的 URL
     console.log(`请求视频 URL: ${url}`);
 
     try {
@@ -1042,9 +968,14 @@ async function getVideos(originalParams = {}) {
         });
 
         const htmlContent = response.data;
+        console.log("返回的HTML内容：", htmlContent);  // 打印返回的HTML内容，检查是否包含视频数据
 
         // 使用 Widget.html.load 解析 HTML
         const $ = Widget.html.load(htmlContent);
+        if (!$) {
+            console.log("解析HTML失败，无法加载 Widget.html.load");
+            throw new Error("无法加载HTML内容，请检查Widget.html.load是否正确配置");
+        }
 
         // 解析视频项
         const items = [];
@@ -1094,7 +1025,6 @@ async function getVideos(originalParams = {}) {
         throw new Error("获取热门视频失败: " + error.message);  // 返回异常错误
     }
 }
-
 
 // 加载视频详情函数
 async function loadDetail(link) {
