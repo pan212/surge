@@ -17,7 +17,7 @@
 if ($request.url.includes("/recommended")) {
   const cookieHeader = $request.headers["Cookie"] || $request.headers["cookie"];
   if (cookieHeader) {
-    const message = `<<<===== 🍪 Cookie =====>>>\n${cookieHeader}<<<===== 🍪 Cookie =====>>>`;
+    const message = `<<<===== 🍪 Cookie =====>>>\n${cookieHeader}\n<<<===== 🍪 Cookie =====>>>`;
     console.log(message);
     $notification.post("📡 Pornhub Cookie 抓取", "成功 ✅", cookieHeader);
   } else {
