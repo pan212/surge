@@ -15,17 +15,15 @@
  * 3. 系统弹出通知「Cookie 抓取成功」，并自动复制到剪贴板
  * 4. 可在 Surge 控制台中查看完整 Cookie 日志
  */
-
 if ($request.url.includes("/recommended")) {
   const cookieHeader = $request.headers["Cookie"] || $request.headers["cookie"];
-
   if (cookieHeader) {
-    const message = "🍪 Cookie 抓取成功，已复制到剪贴板";
-    $clipboard.write(cookieHeader); // 自动复制
-    $notification.post("📡 Pornhub Cookie", "✅ 成功", message);
-    console.log("🍪 Cookie:", cookieHeader);
+    const message = `<<<===== 🍪 Cookie =====>>>\n${cookieHeader}<<<===== 🍪 Cookie =====>>>`;
+    console.log(message);
+    $notification.post("📡 Pornhub Cookie 抓取", "成功 ✅", cookieHeader);
   } else {
-    $notification.post("📡 Pornhub Cookie", "❌ 失败", "请求中没有发现 Cookie");
-    console.log("❌ 未检测到 Cookie 字段");
+    console.log("❌ 未捕获到 Cookie");
+    $notification.post("📡 Pornhub Cookie 抓取", "失败 ❌", "请求中没有 Cookie");
   }
 }
+$done({});
