@@ -8,7 +8,7 @@
  *
  * Surge 配置：
  * [Script]
- * Pornhub Cookie 抓取 = type=http-request,pattern=^https:\/\/cn\.pornhub\.com\/recommended,script-path=https://yourdomain.com/ph_cookie.js
+ * Pornhub Cookie 抓取 = type=http-request,pattern=^https:\/\/cn\.pornhub\.com\/recommended,script-path=https://github.com/pan212/surge/raw/refs/heads/main/ck.js
  *
  * [MITM]
  * hostname = cn.pornhub.com
