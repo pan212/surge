@@ -1,15 +1,15 @@
 var WidgetMetadata = {
     id: "javdb_search_enhanced",
     title: "JavDB",
-    description: "获取 JavDB 搜索",
-    author: "",
+    description: "获取 JavDB 搜索结果",
+    author: "加勒比海带",
     site: "https://javdb.com",
     version: "1.0.0",
     requiredVersion: "0.0.1",
     modules: [
         {
             title: "JavDB 搜索",
-            description: "输入关键词•番号搜索影片",
+            description: "输入关键词・番号搜索影片",
             requiresWebView: false,
             functionName: "searchJavDB",
             sectionMode: false,
@@ -17,63 +17,123 @@ var WidgetMetadata = {
             params: [
                 {
                     name: "code",
-                    title: "关键词•番号",
+                    title: "关键词・番号",
                     type: "input",
-                    description: "输入番号或者关键词(如:DLDSS-408或者楪カレン)",
+                    description: "如：DLDSS-408 或 楪カレン",
                     value: "",
                     placeholders: [
                         { title: "示例番号", value: "DLDSS-408" },
-                        { title: "示例关键词", value: "楪カレン" }
+                        { title: "示例演员", value: "楪カレン" }
                     ]
                 }
             ]
         }
     ]
 };
-
-async function searchJavDB(params, env) {
-    const keyword = encodeURIComponent(params.code || "");
-    const url = `https://javdb.com/search?q=${keyword}&f=all`;
-
-    const html = await env.$http.get(url, {
-        headers: {
-            "User-Agent": env?.$defaultUserAgent,
-            "Referer": "https://javdb.com/"
-        }
-    });
-
-    const $ = env.$load(html);
-    const results = [];
-
-    $("div.video-item").each((i, el) => {
-        const title = $(el).find(".video-title").text().trim();
-        const cover = $(el).find("img").attr("data-src") || $(el).find("img").attr("src");
-        const link = "https://javdb.com" + ($(el).find("a").attr("href") || "");
-        const info = $(el).find(".video-meta").text().trim();
-        const date = $(el).find(".meta-item:contains('发行时间')").text().replace("发行时间: ", "");
-
-        results.push({
-            title: title,
-            description: info,
-            image: cover,
-            url: link,
-            route: link,
-            buttons: [
-                {
-                    title: "打开详情页",
-                    action: "webview",
-                    url: link
-                }
-            ]
-        });
-    });
-
-    if (results.length === 0) {
-        return [{
-            title: "未找到任何结果",
-            description: `关键词「${params.code}」无匹配结果，请更换关键词或稍后再试。`
-        }];
+async function searchJavDB(params = {}, env) {
+    const keyword = params.code?.trim();
+    if (!keyword) {
+        return [{ title: "请输入关键词或番号" }];
     }
 
-    return results;
+    const searchUrl = `https://javdb.com/search?q=${encodeURIComponent(keyword)}&f=all`;
+
+    try {
+        const html = await env.$http.get(searchUrl, {
+            headers: {
+                "User-Agent": env?.$defaultUserAgent,
+                "Referer": "https://javdb.com/"
+            }
+        });
+
+        const $ = env.$load(html);
+        const $items = $(".movie-list .item");
+        if ($items.length === 0) {
+            return [{
+                title: "未找到任何结果",
+                description: `关键词「${keyword}」没有匹配项，可能是输入错误或页面结构更新`
+            }];
+        }
+
+        // 并发加载详情页
+        const results = await Promise.all($items.toArray().map(async (el) => {
+            try {
+                const $el = $(el);
+                const href = $el.find("a").attr("href");
+                const link = `https://javdb.com${href}`;
+                const title = $el.find(".video-title").text().trim();
+                const image = $el.find("img").attr("data-src") || $el.find("img").attr("src") || "";
+
+                // 简化：提取发行时间、简介等
+                const detailData = await fetchDetail(link, env);
+
+                return {
+                    title: `${title} (${detailData.duration || "未知时长"})`,
+                    description: detailData.description || "暂无简介",
+                    image,
+                    url: link,
+                    route: link,
+                    previewUrl: detailData.preview || "",
+                    buttons: [
+                        {
+                            title: "打开详情页",
+                            action: "webview",
+                            url: link
+                        },
+                        {
+                            title: "复制标题",
+                            action: "copy",
+                            value: title
+                        }
+                    ]
+                };
+            } catch (e) {
+                console.warn("解析单个条目失败:", e.message);
+                return null;
+            }
+        }));
+
+        return results.filter(Boolean); // 移除 null
+
+    } catch (err) {
+        console.error("搜索失败:", err.message);
+        return [{
+            title: "搜索失败，请稍后重试",
+            description: "可能是网络问题、JavDB 反爬或 IP 被封，请更换代理或网络。"
+        }];
+    }
+}
+async function fetchDetail(url, env) {
+    try {
+        const res = await env.$http.get(url, {
+            headers: {
+                "User-Agent": env?.$defaultUserAgent,
+                "Referer": "https://javdb.com/"
+            }
+        });
+        const html = res.toString();
+        const $ = env.$load(html);
+
+        const duration = $(".panel-block strong:contains('時長')").parent().find('.value').text()?.trim() || "未知";
+        const description = $(".panel-block strong:contains('簡介')").parent().find('.value').text()?.trim();
+
+        let preview = $("#preview-video source").attr("src") || "";
+        if (preview.startsWith('//')) preview = `https:${preview}`;
+        if (preview && !preview.startsWith('http')) {
+            preview = new URL(preview, url).href;
+        }
+
+        return {
+            duration,
+            description,
+            preview
+        };
+    } catch (err) {
+        console.warn("详情页解析失败:", err.message);
+        return {
+            duration: "未知",
+            description: "",
+            preview: ""
+        };
+    }
 }
