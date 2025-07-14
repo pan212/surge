@@ -137,3 +137,7 @@ async function fetchDetail(url, env) {
         };
     }
 }
+module.exports = {
+    metadata: WidgetMetadata,
+    searchJavDB: searchJavDB,
+};
